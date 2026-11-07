@@ -21,7 +21,7 @@ For evaluators and competition judges, pre-provisioned active accounts are confi
 
 ## 🌐 Live Production Application
 
-- **Live URL**: [https://vibe-coding-challenge-2-0-12-samose.vercel.app](https://vibe-coding-challenge-2-0-12-samose.vercel.app)
+- - **Live URL**: [https://one-academy-exclrs.vercel.app/](https://one-academy-exclrs.vercel.app/)
 - **Repository**: [https://github.com/sourav0006/vibe-coding-challenge-2-0-12-samose](https://github.com/sourav0006/vibe-coding-challenge-2-0-12-samose)
 - **Deployment Platform**: Vercel Serverless Edge & Node.js Runtime
 - **Database**: MongoDB Atlas Dedicated Cluster (M0/Shared) with connection pooling
