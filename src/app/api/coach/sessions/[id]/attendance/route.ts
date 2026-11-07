@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { SessionService, AttendanceService } from "@/lib/services";
 import { objectIdSchema, updateSessionAttendanceSchema, markAttendanceSchema } from "@/lib/validation";
@@ -110,6 +111,10 @@ async function handleAttendanceUpdate(
     }
 
     await AttendanceService.recordSessionAttendance(sessionId, recordsToUpdate);
+
+    try {
+      revalidatePath(`/dashboard/coach/sessions/${sessionId}`);
+    } catch {}
 
     // Return the refreshed attendance sheet
     const updatedSheet = await SessionService.getAttendanceSheet(sessionId);

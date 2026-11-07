@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { SportService } from "@/lib/services";
 import { SportsCatalogueView } from "@/features/coach/sports-catalogue-view";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function CoachSportsPage() {
+async function CoachSportsContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -28,5 +28,13 @@ export default async function CoachSportsPage() {
     <AppShell user={user}>
       <SportsCatalogueView initialSports={initialSports} />
     </AppShell>
+  );
+}
+
+export default function CoachSportsPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <CoachSportsContent />
+    </Suspense>
   );
 }

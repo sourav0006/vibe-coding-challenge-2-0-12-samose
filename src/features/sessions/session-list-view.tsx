@@ -2,14 +2,20 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatDateOnly } from "@/lib/utils";
+import { MetricCard } from "@/components/ui/metric-card";
+import {
+  CalendarIcon,
+  PlusIcon,
+  UsersIcon,
+  ArrowRightIcon,
+} from "@/components/ui/icons";
+import { formatDateOnly, cn } from "@/lib/utils";
 import type { SessionListItemDTO } from "@/lib/services";
 
 export interface SportOption {
@@ -38,6 +44,14 @@ export function SessionListView({
   const [pagination, setPagination] = useState(initialPagination);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Synchronize when server component props update
+  const [prevInitialSessions, setPrevInitialSessions] = useState(initialSessions);
+  if (initialSessions !== prevInitialSessions) {
+    setPrevInitialSessions(initialSessions);
+    setSessions(initialSessions);
+    setPagination(initialPagination);
+  }
 
   // Filters
   const [sportFilter, setSportFilter] = useState("all");
@@ -104,146 +118,130 @@ export function SessionListView({
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-text-primary)] tracking-tight">
-            Practice Sessions
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2D7C3]">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold tracking-wider uppercase bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+              <CalendarIcon className="w-3.5 h-3.5 text-[#4ADE80]" />
+              PRACTICE SESSIONS
+            </span>
+            <span className="text-xs font-barlow-condensed font-semibold text-[#665C52]">
+              • {totalSessionsCount} TOTAL SCHEDULED
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight mt-1">
+            Training &amp; Attendance
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-secondary)]">
+          <p className="text-xs sm:text-sm text-[#665C52]">
             Schedule practice sessions, conduct roll-calls, and record official attendance rosters.
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link href="/dashboard/coach/sessions/new">
-            <Button variant="primary" size="md" className="gap-2 shadow-xs">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-              Create Session
+            <Button
+              className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs sm:text-sm h-9 px-4 rounded-xl shadow-xs gap-1.5 cursor-pointer"
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              <span>+ Create Session</span>
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card variant="bordered" className="bg-white">
-          <CardHeader className="pb-1">
-            <span className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-              Total Sessions
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-[var(--color-text-primary)]">
-              {totalSessionsCount}
-            </div>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Across all sports catalogued</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <MetricCard
+          title="TOTAL SESSIONS"
+          value={String(totalSessionsCount).padStart(2, "0")}
+          subtitle="Across all catalogued sports"
+        />
 
-        <Card variant="bordered" className="bg-white">
-          <CardHeader className="pb-1">
-            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Open Sessions
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-emerald-700">
-              {openSessionsCount}
-            </div>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Ready for attendance marking</p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="OPEN SESSIONS"
+          value={String(openSessionsCount).padStart(2, "0")}
+          subtitle="Ready for roll-call marking"
+        />
 
-        <Card variant="bordered" className="bg-white">
-          <CardHeader className="pb-1">
-            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-              Finalized Sessions
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-slate-700">
-              {closedSessionsCount}
-            </div>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Immutable attendance records</p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="FINALIZED SESSIONS"
+          value={String(closedSessionsCount).padStart(2, "0")}
+          subtitle="Locked attendance rosters"
+        />
       </div>
 
       {/* Filters Card */}
-      <Card variant="bordered" className="bg-white">
-        <CardContent className="p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 items-end">
-            <div>
-              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                Filter by Sport
-              </label>
-              <Select
-                value={sportFilter}
-                onChange={(e) => setSportFilter(e.target.value)}
-                options={[
-                  { value: "all", label: "All Sports" },
-                  ...sportsList.map((s) => ({
-                    value: s.id,
-                    label: s.isActive === false ? `${s.name} (Inactive)` : s.name,
-                  })),
-                ]}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                Session Status
-              </label>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as "all" | "open" | "closed")}
-                options={[
-                  { value: "all", label: "All Statuses" },
-                  { value: "open", label: "Open (In Progress)" },
-                  { value: "closed", label: "Closed (Finalized)" },
-                ]}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[var(--color-text-secondary)] mb-1">
-                Session Date
-              </label>
-              <Input
-                type="date"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="h-10 text-xs"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              {hasActiveFilters && (
-                <Button
-                  variant="outline"
-                  size="md"
-                  onClick={handleResetFilters}
-                  className="w-full text-xs h-10"
-                >
-                  Clear Filters
-                </Button>
-              )}
-            </div>
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl p-4 sm:p-5 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 items-end">
+          <div>
+            <label className="block text-xs font-barlow-condensed font-bold text-[#132B32] uppercase tracking-wider mb-1">
+              Filter by Sport
+            </label>
+            <Select
+              value={sportFilter}
+              onChange={(e) => setSportFilter(e.target.value)}
+              className="w-full text-xs bg-[#FFF9EF] border-[#DACBB4] focus:border-[#D95B24] rounded-xl text-[#132B32]"
+              options={[
+                { value: "all", label: "All Sports" },
+                ...sportsList.map((s) => ({
+                  value: s.id,
+                  label: s.isActive === false ? `${s.name} (Inactive)` : s.name,
+                })),
+              ]}
+            />
           </div>
-        </CardContent>
-      </Card>
+
+          <div>
+            <label className="block text-xs font-barlow-condensed font-bold text-[#132B32] uppercase tracking-wider mb-1">
+              Session Status
+            </label>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as "all" | "open" | "closed")}
+              className="w-full text-xs bg-[#FFF9EF] border-[#DACBB4] focus:border-[#D95B24] rounded-xl text-[#132B32]"
+              options={[
+                { value: "all", label: "All Statuses" },
+                { value: "open", label: "Open (In Progress)" },
+                { value: "closed", label: "Closed (Finalized)" },
+              ]}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-barlow-condensed font-bold text-[#132B32] uppercase tracking-wider mb-1">
+              Session Date
+            </label>
+            <Input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full text-xs bg-[#FFF9EF] border-[#DACBB4] focus:border-[#D95B24] rounded-xl text-[#132B32]"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                className="w-full text-xs h-9 font-barlow-condensed font-bold text-[#D95B24] hover:text-[#B84617] hover:bg-[#F5EBD8] border-[#DACBB4] rounded-xl cursor-pointer"
+              >
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium shadow-xs">
           {error}
         </div>
       )}
 
       {/* Sessions Table / List */}
-      <Card variant="bordered" className="bg-white overflow-hidden shadow-xs">
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl overflow-hidden shadow-xs">
         {loading ? (
           <div className="py-16">
             <LoadingState message="Loading practice sessions..." />
@@ -259,13 +257,16 @@ export function SessionListView({
               }
               action={
                 hasActiveFilters ? (
-                  <Button variant="outline" size="sm" onClick={handleResetFilters}>
+                  <Button variant="outline" size="sm" onClick={handleResetFilters} className="font-barlow-condensed font-bold rounded-xl">
                     Reset Filters
                   </Button>
                 ) : (
                   <Link href="/dashboard/coach/sessions/new">
-                    <Button variant="primary" size="sm">
-                      Create Practice Session
+                    <Button
+                      size="sm"
+                      className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs h-9 px-4 rounded-xl shadow-xs"
+                    >
+                      + Create Practice Session
                     </Button>
                   </Link>
                 )
@@ -274,19 +275,19 @@ export function SessionListView({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[var(--color-border)] bg-[var(--color-background-subtle)] text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4">Sport</th>
-                  <th className="py-3 px-4 text-center">Applicable Players</th>
-                  <th className="py-3 px-4 text-center">Attendance Breakdown</th>
-                  <th className="py-3 px-4 text-center">Completion</th>
-                  <th className="py-3 px-4 text-center">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#F5EBD8] border-b border-[#E2D7C3] text-[#132B32] font-barlow-condensed font-bold uppercase tracking-wider text-xs sm:text-[13px]">
+                <tr>
+                  <th scope="col" className="py-3.5 px-4">Date</th>
+                  <th scope="col" className="py-3.5 px-4">Sport</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">Applicable Players</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">Attendance Breakdown</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">Completion</th>
+                  <th scope="col" className="py-3.5 px-4 text-center">Status</th>
+                  <th scope="col" className="py-3.5 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border)] font-normal text-[var(--color-text-primary)]">
+              <tbody className="divide-y divide-[#EAE0CF]/60 text-[#132B32]">
                 {sessions.map((session) => {
                   const formattedDate = formatDateOnly(session.sessionDate);
                   const markedPercentage =
@@ -297,57 +298,60 @@ export function SessionListView({
                   return (
                     <tr
                       key={session.id}
-                      className="hover:bg-[var(--color-background-subtle)]/60 transition-colors"
+                      className="hover:bg-[#F5EBD8]/40 transition-colors"
                     >
                       {/* Session Date */}
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-sm text-[var(--color-text-primary)]">
-                          {formattedDate}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="w-7 h-7 rounded-lg bg-[#F5EBD8] border border-[#E2D7C3] flex items-center justify-center text-[#132B32]">
+                            <CalendarIcon className="w-3.5 h-3.5" />
+                          </span>
+                          <span className="font-bold text-[#132B32] font-mono">{formattedDate}</span>
                         </div>
                       </td>
 
                       {/* Sport */}
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full font-semibold text-xs bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-barlow-condensed font-bold uppercase tracking-wider bg-[#E5F4EB] text-[#1F5A38] border border-[#C2E4CD]">
                           {session.sportName}
                         </span>
                       </td>
 
                       {/* Applicable Roster Count */}
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="font-bold text-sm text-[var(--color-text-primary)]">
-                          {session.applicableCount}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 font-bold text-[#132B32] bg-[#F5EBD8]/70 border border-[#E2D7C3] px-2.5 py-0.5 rounded-full text-xs font-mono">
+                          <UsersIcon className="w-3.5 h-3.5 text-[#7A6D5F]" />
+                          {session.applicableCount} players
                         </span>
-                        <span className="text-xs text-[var(--color-text-muted)] ml-1">players</span>
                       </td>
 
                       {/* Present / Absent Breakdown */}
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2 font-medium">
-                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2 font-semibold">
+                          <span className="inline-flex items-center gap-1 text-[#1F5A38] bg-[#E5F4EB] px-2 py-0.5 rounded-md border border-[#C2E4CD] text-[11px] font-mono">
                             <strong>{session.presentCount}</strong> Present
                           </span>
-                          <span className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                          <span className="inline-flex items-center gap-1 text-[#991B1B] bg-[#FEE2E2] px-2 py-0.5 rounded-md border border-[#FECACA] text-[11px] font-mono">
                             <strong>{session.absentCount}</strong> Absent
                           </span>
                         </div>
                       </td>
 
                       {/* Marking Progress */}
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         <div className="flex flex-col items-center gap-1">
                           {session.isComplete ? (
-                            <Badge variant="success" size="sm">
+                            <Badge variant="success" size="sm" dot>
                               Complete ({session.markedCount}/{session.applicableCount})
                             </Badge>
                           ) : (
                             <div className="flex flex-col items-center gap-1 w-28">
-                              <Badge variant="warning" size="sm">
+                              <Badge variant="warning" size="sm" dot>
                                 {session.markedCount} / {session.applicableCount} Marked
                               </Badge>
-                              <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="w-full bg-[#EAE0CF] rounded-full h-1.5 overflow-hidden">
                                 <div
-                                  className="bg-amber-500 h-1.5 rounded-full transition-all duration-300"
+                                  className="bg-[#D95B24] h-1.5 rounded-full transition-all duration-300"
                                   style={{ width: `${markedPercentage}%` }}
                                 />
                               </div>
@@ -357,27 +361,33 @@ export function SessionListView({
                       </td>
 
                       {/* Session Status */}
-                      <td className="py-3.5 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
                         {session.status === "open" ? (
                           <Badge variant="success" size="sm" dot>
                             Open
                           </Badge>
                         ) : (
                           <Badge variant="default" size="sm">
-                            Closed
+                            Finalized
                           </Badge>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3.5 px-4 text-right">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
                         <Link href={`/dashboard/coach/sessions/${session.id}`}>
                           <Button
                             variant={session.status === "open" ? "primary" : "outline"}
                             size="sm"
-                            className="text-xs h-8"
+                            className={cn(
+                              "text-xs font-barlow-condensed font-bold h-8 px-3 rounded-xl",
+                              session.status === "open"
+                                ? "bg-[#D95B24] hover:bg-[#C24F1D] text-white shadow-xs"
+                                : "border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8]"
+                            )}
                           >
-                            {session.status === "open" ? "Mark Attendance" : "View Sheet"}
+                            <span>{session.status === "open" ? "Mark Attendance" : "View Sheet"}</span>
+                            <ArrowRightIcon className="w-3 h-3 ml-1" />
                           </Button>
                         </Link>
                       </td>
@@ -391,10 +401,10 @@ export function SessionListView({
 
         {/* Pagination Footer */}
         {pagination.totalPages > 1 && (
-          <div className="p-4 border-t border-[var(--color-border)] flex items-center justify-between text-xs text-[var(--color-text-secondary)]">
+          <div className="p-4 bg-[#F5EBD8] border-t border-[#E2D7C3] flex items-center justify-between text-xs text-[#665C52] font-barlow-condensed font-semibold">
             <div>
-              Showing page <strong>{pagination.page}</strong> of{" "}
-              <strong>{pagination.totalPages}</strong> ({pagination.total} total sessions)
+              Showing page <strong className="text-[#132B32]">{pagination.page}</strong> of{" "}
+              <strong className="text-[#132B32]">{pagination.totalPages}</strong> ({pagination.total} total sessions)
             </div>
             <div className="flex gap-2">
               <Button
@@ -402,21 +412,23 @@ export function SessionListView({
                 size="sm"
                 disabled={pagination.page <= 1 || loading}
                 onClick={() => fetchSessions(pagination.page - 1)}
+                className="text-xs h-8 px-3 font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl"
               >
-                Previous
+                &larr; Previous
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 disabled={pagination.page >= pagination.totalPages || loading}
                 onClick={() => fetchSessions(pagination.page + 1)}
+                className="text-xs h-8 px-3 font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl"
               >
-                Next
+                Next &rarr;
               </Button>
             </div>
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }

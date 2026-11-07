@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { SessionService } from "@/lib/services";
 import { objectIdSchema } from "@/lib/validation";
@@ -26,6 +27,15 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    try {
+      revalidatePath("/dashboard/coach/readiness");
+      revalidatePath("/dashboard/coach");
+      revalidatePath("/dashboard/coach/sessions");
+      revalidatePath(`/dashboard/coach/sessions/${id}`);
+      revalidatePath("/dashboard/player/attendance");
+      revalidatePath("/dashboard/player");
+    } catch {}
 
     return NextResponse.json(
       {

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { RemarkService, PlayerService } from "@/lib/services";
 import { objectIdSchema, coachRemarkPayloadSchema } from "@/lib/validation";
@@ -90,6 +91,12 @@ export async function POST(
       content: parsedBody.data.content,
       coachId: user.id,
     });
+
+    try {
+      revalidatePath(`/dashboard/coach/players/${id}`);
+      revalidatePath("/dashboard/player/remarks");
+      revalidatePath("/dashboard/player");
+    } catch {}
 
     return NextResponse.json(
       {

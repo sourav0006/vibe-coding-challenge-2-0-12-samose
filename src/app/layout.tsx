@@ -27,13 +27,24 @@ export const metadata: Metadata = {
     "Match Performance",
   ],
   authors: [{ name: "One Academy" }],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+      { url: "/images/logo-dark.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/images/logo-dark.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#15803d",
+  themeColor: "#11262C",
 };
 
 export default function RootLayout({

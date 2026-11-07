@@ -93,9 +93,16 @@ export async function PATCH(
       return NextResponse.json({ success: false, error: error.message }, { status: 403 });
     }
     const message = error instanceof Error ? error.message : "Failed to update match.";
-    const status = message.startsWith("Validation Error:") || message.includes("Cannot update") || message.includes("not found")
+    const isConflict = message.startsWith("Conflict:") || (error as { code?: number })?.code === 11000;
+    const isValidation = message.startsWith("Validation Error:");
+    const status = isConflict
+      ? 409
+      : isValidation || message.includes("Cannot update") || message.includes("not found")
       ? (message.includes("not found") ? 404 : 400)
       : 500;
-    return NextResponse.json({ success: false, error: message }, { status });
+    const cleanError = isConflict && (error as { code?: number })?.code === 11000
+      ? "A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+      : message.replace(/^(Conflict|Validation Error):\s*/, "");
+    return NextResponse.json({ success: false, error: cleanError }, { status });
   }
 }

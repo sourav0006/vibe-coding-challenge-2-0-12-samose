@@ -3,8 +3,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { PageHeader } from "@/components/ui/page-header";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -37,6 +35,14 @@ export function CreatePlayerForm({
     activationCode: string;
     expiresAt: string;
   } | null>(null);
+
+  const resetForm = () => {
+    setFullName("");
+    setEmail("");
+    setAge("");
+    setFormError(null);
+    setSuccessData(null);
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -130,11 +136,19 @@ export function CreatePlayerForm({
   };
 
   const handleModalClose = () => {
-    if (successData) {
-      router.push(`/dashboard/coach/players/${successData.playerId}`);
+    const targetPlayerId = successData?.playerId;
+    resetForm();
+    if (targetPlayerId) {
+      router.push(`/dashboard/coach/players/${targetPlayerId}`);
+      router.refresh();
     } else {
       router.push("/dashboard/coach/players");
+      router.refresh();
     }
+  };
+
+  const handleCreateAnother = () => {
+    resetForm();
   };
 
   const sportOptions = sports.map((s) => ({
@@ -144,28 +158,38 @@ export function CreatePlayerForm({
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-        <Link href="/dashboard/coach/players" className="hover:text-[var(--color-primary)]">
+      <div className="flex items-center gap-2">
+        <Link
+          href="/dashboard/coach/players"
+          className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#7A6D5F] hover:text-[#D95B24] transition-colors inline-flex items-center gap-1.5"
+        >
           &larr; Back to Players
         </Link>
       </div>
 
-      <PageHeader
-        title="Create New Player"
-        description="Provision a player profile, assign an active discipline, and generate a single-use 24-hour activation code."
-      />
+      <div className="space-y-1.5">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold tracking-wider uppercase bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+          NEW ATHLETE ONBOARDING
+        </span>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight mt-1">
+          Create New Player
+        </h1>
+        <p className="text-xs sm:text-sm text-[#665C52]">
+          Provision a player profile, assign an active discipline, and generate a single-use 24-hour activation code.
+        </p>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Player Account Information</CardTitle>
-          <CardDescription>
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2D7C3] bg-[#F5EBD8]">
+          <h2 className="text-lg font-alfa text-[#132B32] uppercase tracking-wide">Player Account Information</h2>
+          <p className="text-xs text-[#665C52] mt-0.5">
             Enter the player&apos;s personal details. The Coach does not assign passwords; the player will create their password upon activating their account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {formError && (
-              <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
                 {formError}
               </div>
             )}
@@ -220,9 +244,15 @@ export function CreatePlayerForm({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-[var(--color-border-subtle)] flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-[#E2D7C3] flex items-center justify-end gap-3">
               <Link href="/dashboard/coach/players">
-                <Button type="button" variant="outline" size="sm" disabled={submitting}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={submitting}
+                  className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl"
+                >
                   Cancel
                 </Button>
               </Link>
@@ -232,19 +262,22 @@ export function CreatePlayerForm({
                 size="sm"
                 isLoading={submitting}
                 disabled={sports.length === 0}
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl"
               >
                 Create Player &amp; Generate Code
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* Activation Code Display Modal */}
       {successData && (
         <ActivationCodeModal
           isOpen={Boolean(successData)}
           onClose={handleModalClose}
+          onCreateAnother={handleCreateAnother}
+          createAnotherLabel="Create Another Player"
           playerName={successData.playerName}
           playerEmail={successData.playerEmail}
           sportName={successData.sportName}

@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { PlayerPortalService, type PlayerMatchHistoryResult } from "@/lib/services";
 import { PlayerMatchesView } from "@/features/player";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function PlayerMatchesPage() {
+async function PlayerMatchesContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -44,5 +44,13 @@ export default async function PlayerMatchesPage() {
     <AppShell user={user}>
       <PlayerMatchesView initialData={matchesData} />
     </AppShell>
+  );
+}
+
+export default function PlayerMatchesPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <PlayerMatchesContent />
+    </Suspense>
   );
 }

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -72,27 +71,39 @@ export function CreateSessionForm({ sportsList }: CreateSessionFormProps) {
       <div>
         <Link
           href="/dashboard/coach/sessions"
-          className="text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center gap-1"
+          className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#7A6D5F] hover:text-[#D95B24] transition-colors inline-flex items-center gap-1.5"
         >
           &larr; Back to Sessions
         </Link>
       </div>
 
-      <Card variant="bordered" className="bg-white shadow-xs">
-        <CardHeader className="pb-4 border-b border-[var(--color-border)]">
-          <CardTitle className="text-xl font-extrabold text-[var(--color-text-primary)]">
-            Schedule New Practice Session
-          </CardTitle>
-          <CardDescription className="text-xs text-[var(--color-text-secondary)] mt-1">
-            Create an open training session for a designated sport. All currently assigned eligible players will automatically be populated onto the attendance roster.
-          </CardDescription>
-        </CardHeader>
+      <div className="space-y-1.5">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold tracking-wider uppercase bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+          TRAINING ROSTER DISPATCH
+        </span>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight mt-1">
+          Schedule Practice Session
+        </h1>
+        <p className="text-xs sm:text-sm text-[#665C52]">
+          Schedule a practice session. Eligible players are added automatically.
+        </p>
+      </div>
 
-        <CardContent className="pt-6">
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2D7C3] bg-[#F5EBD8]">
+          <h2 className="text-lg font-alfa text-[#132B32] uppercase tracking-wide">
+            Session Details &amp; Date
+          </h2>
+          <p className="text-xs text-[#665C52] mt-0.5">
+            Designate the sport discipline and calendar date. A single session per sport per date is enforced.
+          </p>
+        </div>
+
+        <div className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Error banner */}
             {error && (
-              <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-start gap-2">
                 <svg className="w-4 h-4 text-red-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
@@ -102,11 +113,11 @@ export function CreateSessionForm({ sportsList }: CreateSessionFormProps) {
 
             {/* Sport Select */}
             <div>
-              <label htmlFor="sportId" className="block text-xs font-bold text-[var(--color-text-primary)] mb-1.5">
-                Sport <span className="text-red-500">*</span>
+              <label htmlFor="sportId" className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1.5">
+                Sport <span className="text-[#D95B24]">*</span>
               </label>
               {activeSports.length === 0 ? (
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+                <div className="p-3 rounded-xl bg-[#FFF4DE] border border-[#FAD79A] text-[#9A6700] text-xs">
                   No active sports available. Please activate or catalogue a sport first.
                 </div>
               ) : (
@@ -119,17 +130,18 @@ export function CreateSessionForm({ sportsList }: CreateSessionFormProps) {
                     label: s.name,
                   }))}
                   disabled={loading}
+                  className="bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
                 />
               )}
-              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
+              <p className="text-[11px] text-[#7A6D5F] mt-1">
                 Only active sports can hold training sessions.
               </p>
             </div>
 
             {/* Session Date */}
             <div>
-              <label htmlFor="sessionDate" className="block text-xs font-bold text-[var(--color-text-primary)] mb-1.5">
-                Session Date <span className="text-red-500">*</span>
+              <label htmlFor="sessionDate" className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1.5">
+                Session Date <span className="text-[#D95B24]">*</span>
               </label>
               <Input
                 id="sessionDate"
@@ -138,25 +150,24 @@ export function CreateSessionForm({ sportsList }: CreateSessionFormProps) {
                 onChange={(e) => setSessionDate(e.target.value)}
                 disabled={loading}
                 required
-                className="h-10 text-xs font-medium"
+                className="h-10 text-xs font-medium bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
               />
-              <p className="text-[11px] text-[var(--color-text-muted)] mt-1">
+              <p className="text-[11px] text-[#7A6D5F] mt-1 font-mono">
                 Stored in consistent calendar time. Multiple sessions for the same sport on the same date are prohibited.
               </p>
             </div>
 
-            {/* Session Info Note */}
-            <div className="p-3.5 rounded-lg bg-[var(--color-background-subtle)] border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] space-y-1">
-              <strong className="text-[var(--color-text-primary)]">Session Lifecycle:</strong>
-              <p className="text-[11px]">
-                Newly created sessions default to <span className="font-semibold text-emerald-700">Open</span> status. Once attendance is completely marked for all applicable players, you can finalize and lock the session.
-              </p>
-            </div>
 
             {/* Form Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E2D7C3]">
               <Link href="/dashboard/coach/sessions">
-                <Button variant="outline" size="md" type="button" disabled={loading} className="text-xs">
+                <Button
+                  variant="outline"
+                  size="md"
+                  type="button"
+                  disabled={loading}
+                  className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl text-xs"
+                >
                   Cancel
                 </Button>
               </Link>
@@ -166,14 +177,14 @@ export function CreateSessionForm({ sportsList }: CreateSessionFormProps) {
                 type="submit"
                 isLoading={loading}
                 disabled={loading || activeSports.length === 0}
-                className="text-xs"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl text-xs"
               >
-                Create Practice Session
+                Schedule Practice Session
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

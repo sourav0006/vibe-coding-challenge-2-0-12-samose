@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
-import { DashboardService } from "@/lib/services";
+import { DashboardService, ReadinessService } from "@/lib/services";
 
 export async function GET() {
   try {
     await requireCoach();
 
-    const [stats, recentPlayers, recentMatches] = await Promise.all([
+    const [stats, recentPlayers, recentMatches, attendanceTrend, readinessStats] = await Promise.all([
       DashboardService.getCoachStats(),
       DashboardService.getRecentPlayers(5),
       DashboardService.getRecentMatches(5),
+      DashboardService.getAttendanceTrend(8),
+      ReadinessService.getCoachReadinessStats(),
     ]);
 
     return NextResponse.json(
@@ -19,6 +21,8 @@ export async function GET() {
           stats,
           recentPlayers,
           recentMatches,
+          attendanceTrend,
+          readinessStats,
         },
       },
       { status: 200 }

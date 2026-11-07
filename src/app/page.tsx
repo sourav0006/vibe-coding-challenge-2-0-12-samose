@@ -1,54 +1,38 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRightIcon, PlayIcon } from "./landing-icons";
-
-interface RoleOption {
-  role: "coach" | "player" | "scout";
-  title: string;
-  description: string;
-  badge: string;
-  badgeColor: string;
-  href: string;
-}
-
-const ROLE_OPTIONS: RoleOption[] = [
-  {
-    role: "coach",
-    title: "COACH",
-    description: "Manage your academy.",
-    badge: "Administration",
-    badgeColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
-    href: "/login?role=coach",
-  },
-  {
-    role: "player",
-    title: "PLAYER",
-    description: "Access your training journey.",
-    badge: "Athlete",
-    badgeColor: "bg-sky-500/20 text-sky-300 border-sky-500/30",
-    href: "/login?role=player",
-  },
-  {
-    role: "scout",
-    title: "SCOUT",
-    description: "Discover academy talent.",
-    badge: "Evaluation",
-    badgeColor: "bg-amber-500/20 text-amber-300 border-amber-500/30",
-    href: "/login?role=scout",
-  },
-];
+import { GlassButton } from "@/components/ui/glass-button";
+import { PlayIcon } from "./landing-icons";
 
 export default function LandingPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [hasVideoEnded, setHasVideoEnded] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
+  // Video completion callback - preserves final frame naturally
+  const handleVideoEnded = useCallback(() => {
+    setHasVideoEnded(true);
+  }, []);
+
+  // Time update fallback: guarantees completion state when video reaches the end
+  const handleTimeUpdate = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || hasVideoEnded) return;
+
+    if (video.duration && video.currentTime >= video.duration - 0.08) {
+      setHasVideoEnded(true);
+    }
+  }, [hasVideoEnded]);
+
+  // Attempt muted autoplay on mount
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Attempt muted autoplay on mount
     const playPromise = video.play();
     if (playPromise !== undefined) {
       playPromise
@@ -77,8 +61,11 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-black text-white flex flex-col justify-between select-none">
-      {/* 1. Cinematic Video Background (Plays exactly once, retains final frame naturally) */}
+    <div
+      ref={containerRef}
+      className="relative min-h-screen w-full overflow-hidden bg-black text-white flex flex-col justify-between select-none"
+    >
+      {/* 1. Cinematic Video Background: 100% natural brightness, clarity, no dark overlays */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <video
           ref={videoRef}
@@ -87,135 +74,197 @@ export default function LandingPage() {
           muted
           playsInline
           preload="metadata"
+          onEnded={handleVideoEnded}
+          onTimeUpdate={handleTimeUpdate}
+          onError={handleVideoEnded}
           className="h-full w-full object-cover object-center"
-        />
-
-        {/* 2. Refined Dark Gradient Overlay for Maximum Legibility & Atmosphere */}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute inset-0 bg-radial-[circle_at_center,_var(--tw-gradient-stops)] from-transparent via-black/30 to-black/75"
-          aria-hidden="true"
         />
       </div>
 
-      {/* 3. Minimalist Header */}
-      <header className="relative z-10 w-full px-6 py-8 sm:px-10 flex items-center justify-between">
+      {/* 2. Persistent One Academy Brand Header (Top-left, always visible from first frame) */}
+      <header className="relative z-20 w-full px-6 py-6 sm:px-10 flex items-center justify-between pointer-events-auto">
         <div className="flex items-center gap-3">
-          {/* Subtle crest icon */}
-          <div className="w-8 h-8 rounded-lg bg-emerald-600/90 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-emerald-950/50 border border-emerald-400/30 backdrop-blur-xs">
-            <svg
-              className="w-4 h-4 text-white"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
-              <path d="M12 8v8" />
-              <path d="M8 12h8" />
-            </svg>
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shrink-0">
+            <Image
+              src="/images/logo-white.png"
+              alt="One Academy Logo"
+              width={36}
+              height={36}
+              className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]"
+              priority
+            />
           </div>
-          <span className="text-sm font-bold tracking-[0.25em] text-white/95 uppercase">
+          <span className="text-xs sm:text-sm font-semibold tracking-[0.24em] text-white/95 uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
             ONE ACADEMY
           </span>
         </div>
 
-        {/* Subtle manual play button if browser blocked autoplay */}
-        {autoplayBlocked && (
+        {/* Playback affordance if browser autoplay was blocked */}
+        {autoplayBlocked && !hasVideoEnded && (
           <button
             type="button"
             onClick={handleManualPlay}
             aria-label="Play stadium introduction video"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-white/10 hover:bg-white/20 text-white/90 border border-white/20 backdrop-blur-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
-            <PlayIcon className="w-3.5 h-3.5 text-emerald-400" />
+            <PlayIcon className="w-3.5 h-3.5 text-white" />
             <span>Play Video</span>
           </button>
         )}
       </header>
 
-      {/* 4. Central Hero Statement & Role Selection Area */}
-      <main className="relative z-10 w-full max-w-6xl mx-auto px-6 py-6 sm:px-8 flex flex-col items-center justify-center text-center my-auto">
-        {/* Subtle Brand Tagline */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase bg-white/10 text-emerald-300 border border-emerald-500/30 backdrop-blur-md mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span>Single-Academy Management Platform</span>
-        </div>
-
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white max-w-3xl leading-tight sm:leading-none mb-4 drop-shadow-md">
-          Precision Sports Intelligence.
-        </h1>
-
-        <p className="text-sm sm:text-base text-white/75 max-w-lg mb-12 sm:mb-16 font-normal leading-relaxed drop-shadow-sm">
-          Select your portal to enter the One Academy management system.
-        </p>
-
-        {/* 5. Role Selection Options (Desktop horizontal grid, mobile stacked) */}
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl">
-          {ROLE_OPTIONS.map((opt) => (
-            <Link
-              key={opt.role}
-              href={opt.href}
-              className="group relative flex flex-col items-start text-left p-6 sm:p-7 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] border border-white/[0.15] hover:border-emerald-500/60 backdrop-blur-md transition-all duration-200 shadow-lg shadow-black/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+      {/* 3. Desktop Video-Synchronized Interactive Overlay (md:block) */}
+      {/* Container dimensions strictly track the 16:9 covered video frame, visible immediately from frame 1 */}
+      <div className="hidden md:block absolute inset-0 z-10 overflow-hidden pointer-events-none">
+        <div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{
+            width: "max(100vw, calc(100vh * 16 / 9))",
+            height: "max(100vh, calc(100vw * 9 / 16))",
+          }}
+        >
+          {/* Welcome Heading: Centered in dusk sky negative space above players - bold collegiate slab display font matching Dashboard & Login */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-[3.6%] pointer-events-auto text-center px-4">
+            <h1
+              className="font-alfa text-2xl sm:text-3xl md:text-[34px] lg:text-[38px] xl:text-[42px] text-white select-none leading-tight tracking-tight whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-alfa), "Alfa Slab One", serif',
+                textShadow:
+                  "0 2px 4px rgba(0, 0, 0, 0.75), 0 4px 12px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.35)",
+              }}
             >
-              {/* Top Row: Badge & Arrow Indicator */}
-              <div className="w-full flex items-center justify-between mb-5">
-                <span
-                  className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border ${opt.badgeColor}`}
-                >
-                  {opt.badge}
-                </span>
+              Welcome to One Academy
+            </h1>
+          </div>
 
-                <div className="w-7 h-7 rounded-full bg-white/10 text-white/60 group-hover:text-white group-hover:bg-emerald-600 flex items-center justify-center transition-all duration-200">
-                  <ArrowRightIcon className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </div>
+          {/* Three Role Buttons: Positioned directly under each person on the grass turf - visible from frame 1 */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Coach Button (Left: 29.2%, Bottom: 7.9% / Top: 92.1%) */}
+            <div
+              className="role-button absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              style={{ left: "29.2%", top: "92.1%" }}
+            >
+              <GlassButton
+                href="/login?role=coach"
+                size="lg"
+                className="w-[180px] h-[52px] justify-center font-barlow-condensed font-semibold text-lg sm:text-[19px] tracking-[0.06em]"
+                aria-label="Enter as Coach"
+              >
+                Coach
+              </GlassButton>
+            </div>
 
-              {/* Role Title */}
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-1.5 group-hover:text-emerald-300 transition-colors">
-                {opt.title}
-              </h2>
+            {/* Player Button (Left: 50.0%, Bottom: 7.9% / Top: 92.1%) */}
+            <div
+              className="role-button absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              style={{ left: "50.0%", top: "92.1%" }}
+            >
+              <GlassButton
+                href="/login?role=player"
+                size="lg"
+                className="w-[180px] h-[52px] justify-center font-barlow-condensed font-semibold text-lg sm:text-[19px] tracking-[0.06em]"
+                aria-label="Enter as Player"
+              >
+                Player
+              </GlassButton>
+            </div>
 
-              {/* Role Description */}
-              <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-normal">
-                {opt.description}
-              </p>
-
-              {/* Bottom Subtle Affordance Line */}
-              <div className="mt-5 text-[11px] font-semibold text-emerald-400/90 flex items-center gap-1 group-hover:text-emerald-300">
-                <span>Enter Portal</span>
-                <span aria-hidden="true">&rarr;</span>
-              </div>
-            </Link>
-          ))}
+            {/* Scout Button (Left: 69.3%, Bottom: 7.9% / Top: 92.1%) */}
+            <div
+              className="role-button absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              style={{ left: "69.3%", top: "92.1%" }}
+            >
+              <GlassButton
+                href="/login?role=scout"
+                size="lg"
+                className="w-[180px] h-[52px] justify-center font-barlow-condensed font-semibold text-lg sm:text-[19px] tracking-[0.06em]"
+                aria-label="Enter as Scout"
+              >
+                Scout
+              </GlassButton>
+            </div>
+          </div>
         </div>
-      </main>
+      </div>
 
-      {/* 6. Elegant Bottom Footer */}
-      <footer className="relative z-10 w-full px-6 py-6 sm:px-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50 border-t border-white/[0.08] bg-black/40 backdrop-blur-xs">
-        <p className="tracking-wide">
-          &copy; 2026 ONE ACADEMY • All Rights Reserved
-        </p>
+      {/* 4. Mobile Safe Responsive Overlay (md:hidden) - visible immediately from frame 1 */}
+      <div className="md:hidden relative z-10 w-full min-h-[calc(100vh-140px)] flex flex-col justify-between items-center px-6 py-4 pointer-events-none">
+        {/* Mobile Heading */}
+        <div className="pointer-events-auto text-center mt-1 px-2">
+          <h1
+            className="font-alfa text-xl sm:text-2xl font-normal text-white leading-tight tracking-tight text-center"
+            style={{
+              fontFamily: 'var(--font-alfa), "Alfa Slab One", serif',
+              textShadow:
+                "0 2px 4px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.55)",
+            }}
+          >
+            Welcome to One Academy
+          </h1>
+        </div>
 
-        <div className="flex items-center gap-4">
+        {/* Mobile Role Buttons (Vertically stacked on the lower turf safe area) */}
+        <div className="pointer-events-auto flex flex-col items-center gap-3.5 w-full max-w-xs mb-4">
+          <div className="role-button w-full flex justify-center">
+            <GlassButton
+              href="/login?role=coach"
+              size="lg"
+              className="w-full max-w-[200px] h-[48px] justify-center font-barlow-condensed font-semibold text-base sm:text-lg tracking-[0.06em]"
+              aria-label="Enter as Coach"
+            >
+              Coach
+            </GlassButton>
+          </div>
+          <div className="role-button w-full flex justify-center">
+            <GlassButton
+              href="/login?role=player"
+              size="lg"
+              className="w-full max-w-[200px] h-[48px] justify-center font-barlow-condensed font-semibold text-base sm:text-lg tracking-[0.06em]"
+              aria-label="Enter as Player"
+            >
+              Player
+            </GlassButton>
+          </div>
+          <div className="role-button w-full flex justify-center">
+            <GlassButton
+              href="/login?role=scout"
+              size="lg"
+              className="w-full max-w-[200px] h-[48px] justify-center font-barlow-condensed font-semibold text-base sm:text-lg tracking-[0.06em]"
+              aria-label="Enter as Scout"
+            >
+              Scout
+            </GlassButton>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Refined Discreet Footer - visible immediately from frame 1 */}
+      <footer className="relative z-20 w-full px-6 py-6 sm:px-10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/65 pointer-events-auto">
+        <div className="flex items-center gap-3">
+          <p className="tracking-widest uppercase text-[11px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            &copy; 2026 ONE ACADEMY
+          </p>
+          <span className="text-white/40">&bull;</span>
+          <Link
+            href="/support"
+            className="text-[12px] font-medium tracking-wide text-white/80 hover:text-white transition-colors duration-200 underline-offset-4 hover:underline drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          >
+            Contact &amp; Support
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-5 sm:gap-6">
+          <Link
+            href="/legal"
+            className="text-[12px] font-medium tracking-wide text-white/80 hover:text-white transition-colors duration-200 underline-offset-4 hover:underline drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
+          >
+            Privacy &amp; Terms
+          </Link>
           <Link
             href="/activate"
-            className="text-white/70 hover:text-white underline underline-offset-4 transition-colors"
+            className="text-[12px] font-medium tracking-wide text-white/80 hover:text-white transition-colors duration-200 underline-offset-4 hover:underline drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/50"
           >
-            Activate Player or Scout Account
-          </Link>
-          <span aria-hidden="true" className="text-white/20">&bull;</span>
-          <Link
-            href="/login"
-            className="text-white/70 hover:text-white transition-colors"
-          >
-            Direct Sign In
+            Activate Account
           </Link>
         </div>
       </footer>

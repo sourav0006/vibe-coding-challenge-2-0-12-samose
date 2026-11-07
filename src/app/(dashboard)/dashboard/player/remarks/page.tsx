@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { PlayerPortalService, type SafeCoachRemarkDTO } from "@/lib/services";
 import { PlayerRemarksView } from "@/features/player";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function PlayerRemarksPage() {
+async function PlayerRemarksContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -29,5 +29,13 @@ export default async function PlayerRemarksPage() {
     <AppShell user={user}>
       <PlayerRemarksView remarks={remarks} />
     </AppShell>
+  );
+}
+
+export default function PlayerRemarksPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <PlayerRemarksContent />
+    </Suspense>
   );
 }

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { PlayerService } from "@/lib/services";
 import { createPlayerAccountSchema, playerQuerySchema } from "@/lib/validation";
@@ -67,6 +68,12 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await PlayerService.createPlayerWithAccount(parsed.data);
+
+    try {
+      revalidatePath("/dashboard/coach/players");
+      revalidatePath("/dashboard/coach");
+      revalidatePath("/dashboard/coach/readiness");
+    } catch {}
 
     return NextResponse.json(
       {

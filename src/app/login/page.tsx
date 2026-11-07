@@ -1,26 +1,19 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { AuthLayout } from "@/components/auth/auth-layout";
+import { LoadingState } from "@/components/ui";
 import {
-  Container,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-  Button,
-  Input,
-  Select,
-  LoadingState,
-} from "@/components/ui";
-import { Navbar, Footer } from "@/components/layout";
+  PulseLoginMascot,
+  type PulseLoginMood,
+} from "@/components/mascot/fox-mascot";
+import { MascotIcon } from "@/components/mascot/mascot-icons";
 import type { UserRole } from "@/models";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const roleParam = searchParams.get("role");
@@ -34,113 +27,267 @@ function LoginForm() {
   const [role, setRole] = useState<UserRole>(initialRole);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [focused, setFocused] = useState<"idle" | "email" | "password">("idle");
+  const [typing, setTyping] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam === "unauthorized_role"
       ? "You do not have permission for that area. Please sign in with an authorized role."
       : null
   );
 
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup all timers on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+    };
+  }, []);
+
+  const reactToTyping = () => {
+    setTyping(true);
+    if (error) setError(null);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setTyping(false), 750);
+  };
+
+  // Derive fox mascot mood from real user interaction state
+  const mood: PulseLoginMood = success
+    ? "success"
+    : submitting
+    ? "busy"
+    : error && focused === "idle"
+    ? "error"
+    : focused === "password" || (showPassword && focused === "idle")
+    ? "password"
+    : focused;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting || success) return;
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
     setError(null);
-    setLoading(true);
+    setSubmitting(true);
+    setFocused("idle");
+    setTyping(false);
 
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, requestedRole: role }),
+        body: JSON.stringify({ email: trimmedEmail, password, requestedRole: role }),
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
         setError(data.error || "Login failed. Please check your credentials.");
+        if (data.roleMismatch && data.expectedRole) {
+          setRole(data.expectedRole);
+        }
+        setSubmitting(false);
+        setSuccess(false);
         return;
       }
 
-      router.push(`/dashboard/${data.user.role}`);
-      router.refresh();
+      setSuccess(true);
+      setSubmitting(false);
+
+      // Give the mascot a moment to celebrate before navigation
+      if (redirectTimer.current) clearTimeout(redirectTimer.current);
+      redirectTimer.current = setTimeout(() => {
+        // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+        window.location.href = `/dashboard/${data.user.role}`;
+      }, 500);
     } catch {
       setError("An unexpected network error occurred. Please try again.");
-    } finally {
-      setLoading(false);
+      setSubmitting(false);
+      setSuccess(false);
     }
   };
 
-  return (
-    <Card variant="default" className="shadow-md">
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Sign in to One Academy</CardTitle>
-        <CardDescription>
-          Select your designated role and enter your verified credentials.
-        </CardDescription>
-      </CardHeader>
+  const mascotStage = (
+    <div className="ims-stage">
+      <PulseLoginMascot
+        mood={mood}
+        typing={typing}
+        peeking={showPassword}
+      />
+    </div>
+  );
 
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          {error && (
-            <div
-              role="alert"
-              className="p-3 text-xs bg-[var(--color-error-bg)] text-[var(--color-error)] rounded-md border border-[var(--color-error-border)] font-medium"
-            >
-              {error}
+  return (
+    <AuthLayout currentPage="login" mascotStage={mascotStage}>
+      <section className="ims-card" aria-labelledby="ims-login-title">
+        {/* Brand Header */}
+        <div className="flex items-center gap-2 mb-3 select-none">
+          <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
+            <Image
+              src="/images/logo-dark.png"
+              alt="One Academy"
+              width={24}
+              height={24}
+              className="w-full h-full object-contain"
+              priority
+            />
+          </div>
+          <span className="font-alfa text-[11px] tracking-[0.2em] text-[#11262C] uppercase leading-none">
+            ONE ACADEMY
+          </span>
+        </div>
+
+        <h1 id="ims-login-title">Sign In</h1>
+
+        <form
+          className="ims-form"
+          onSubmit={handleSubmit}
+          aria-busy={submitting}
+          onFocusCapture={(e) => {
+            const field = e.target
+              .closest("[data-login-field]")
+              ?.getAttribute("data-login-field");
+            if (field === "email" || field === "password") {
+              setFocused(field);
+            } else {
+              setFocused("idle");
+            }
+          }}
+          onBlurCapture={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+              setFocused("idle");
+            }
+          }}
+        >
+          {/* Role Selection Tabs */}
+          <div className="ims-field" data-login-field="role">
+            <label>Select Portal Role</label>
+            <div className="ims-role-selector" role="radiogroup" aria-label="Designated Role">
+              {(["coach", "player", "scout"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  role="radio"
+                  aria-checked={role === r}
+                  className={`ims-role-btn ${role === r ? "is-active" : ""}`}
+                  onClick={() => {
+                    setRole(r);
+                    if (error) setError(null);
+                  }}
+                  disabled={submitting || success}
+                >
+                  {r === "coach" ? "Coach" : r === "player" ? "Player" : "Scout"}
+                </button>
+              ))}
             </div>
+          </div>
+
+          {/* Email Address */}
+          <div className="ims-field" data-login-field="email">
+            <label htmlFor="ims-email">Email Address</label>
+            <div className="ims-input-wrap">
+              <MascotIcon name="user" />
+              <input
+                id="ims-email"
+                name="email"
+                type="email"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  reactToTyping();
+                }}
+                placeholder="name@oneacademy.com"
+                autoCapitalize="none"
+                spellCheck={false}
+                disabled={submitting || success}
+              />
+            </div>
+          </div>
+
+          {/* Password with Show/Hide toggle */}
+          <div className="ims-field" data-login-field="password">
+            <label htmlFor="ims-password">Password</label>
+            <div className="ims-input-wrap">
+              <MascotIcon name="lock" />
+              <input
+                id="ims-password"
+                name="password"
+                autoComplete="current-password"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  reactToTyping();
+                }}
+                placeholder="Enter password"
+                disabled={submitting || success}
+              />
+              <button
+                className="ims-reveal"
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+                disabled={submitting || success}
+              >
+                <MascotIcon name={showPassword ? "eyeOff" : "eye"} />
+              </button>
+            </div>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <p className="ims-error" role="alert">
+              {error}
+            </p>
           )}
 
-          <Select
-            label="Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            options={[
-              { value: "coach", label: "Coach" },
-              { value: "player", label: "Player / Athlete" },
-              { value: "scout", label: "Scout" },
-            ]}
-          />
+          {/* Submit Button */}
+          <button className="ims-submit" type="submit" disabled={submitting || success}>
+            <span>{submitting ? "Signing In…" : success ? "Redirecting…" : "Sign In →"}</span>
+          </button>
 
-          <Input
-            label="Email Address"
-            type="email"
-            required
-            placeholder="name@oneacademy.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-
-          <Input
-            label="Password"
-            type="password"
-            required
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </CardContent>
-
-        <CardFooter className="flex-col gap-3">
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full"
-            isLoading={loading}
-          >
-            Sign In
-          </Button>
-
-          <p className="text-xs text-[var(--color-text-secondary)] text-center">
+          {/* Secondary Account Activation Link */}
+          <p className="ims-hint text-center text-xs mt-3">
             Have an activation code?{" "}
             <Link
               href="/activate"
-              className="font-medium text-[var(--color-primary)] hover:underline"
+              className="font-bold text-[#D95B24] hover:underline"
             >
-              Activate Player or Scout Account
+              Activate Account
             </Link>
           </p>
-        </CardFooter>
-      </form>
-    </Card>
+
+          <p className="text-center text-xs text-[#718E94] mt-2">
+            Need assistance?{" "}
+            <Link
+              href="/support"
+              className="text-[#718E94] hover:text-[#11262C] font-semibold underline underline-offset-2"
+            >
+              Contact &amp; Support
+            </Link>
+          </p>
+        </form>
+      </section>
+    </AuthLayout>
   );
 }
 
@@ -153,18 +300,8 @@ function LoginFormWrapper() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-background)]">
-      <Navbar />
-
-      <main className="flex-1 flex items-center justify-center py-12">
-        <Container size="sm">
-          <Suspense fallback={<LoadingState message="Loading login portal..." size="sm" />}>
-            <LoginFormWrapper />
-          </Suspense>
-        </Container>
-      </main>
-
-      <Footer />
-    </div>
+    <Suspense fallback={<LoadingState message="Loading login portal..." size="sm" />}>
+      <LoginFormWrapper />
+    </Suspense>
   );
 }

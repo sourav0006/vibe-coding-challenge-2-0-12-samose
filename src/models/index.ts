@@ -8,3 +8,4 @@ export * from "./match.model";
 export * from "./match-participant.model";
 export * from "./coach-remark.model";
 export * from "./activation-code.model";
+export * from "./rate-limit.model";

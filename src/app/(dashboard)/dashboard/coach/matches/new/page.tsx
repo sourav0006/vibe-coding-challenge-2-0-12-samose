@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { SportService } from "@/lib/services";
 import { CreateMatchForm } from "@/features/matches";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function CreateMatchPage() {
+async function CreateMatchContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -34,5 +34,13 @@ export default async function CreateMatchPage() {
     <AppShell user={user}>
       <CreateMatchForm sportsList={sportsList} />
     </AppShell>
+  );
+}
+
+export default function CreateMatchPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <CreateMatchContent />
+    </Suspense>
   );
 }

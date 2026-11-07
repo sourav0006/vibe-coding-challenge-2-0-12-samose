@@ -1,14 +1,64 @@
 "use client";
 
-import React, { useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { formatDateOnly } from "@/lib/utils";
 import type { PlayerMatchHistoryResult } from "@/lib/services";
 
 export interface PlayerMatchesViewProps {
   initialData: PlayerMatchHistoryResult;
+}
+
+function StatScoreboardCard({
+  label,
+  value,
+  sublabel,
+  highlight,
+}: {
+  label: string;
+  value: string | number;
+  sublabel?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="relative group flex flex-col items-center justify-center p-3.5 min-h-[96px] shadow-xs">
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-xs"
+        preserveAspectRatio="none"
+        viewBox="0 0 160 100"
+      >
+        <polygon
+          points="8,2 152,2 158,8 158,92 152,98 8,98 2,92 2,8"
+          fill="#132B32"
+          stroke="#0D1E22"
+          strokeWidth="1.5"
+        />
+        <polygon
+          points="11,5 149,5 155,11 155,89 149,95 11,95 5,89 5,11"
+          fill="none"
+          stroke="#D5A64A"
+          strokeWidth="1.2"
+          strokeOpacity="0.85"
+        />
+      </svg>
+
+      <div className="relative z-10 w-full flex flex-col items-center text-center px-1">
+        <span
+          className={`font-alfa text-2xl sm:text-3xl tracking-tight leading-none truncate max-w-full ${
+            highlight ? "text-[#4ADE80]" : "text-[#FFF9EF]"
+          }`}
+        >
+          {value}
+        </span>
+        <div className="w-3/4 h-px bg-[#D5A64A]/40 my-1.5" />
+        <span className="font-barlow-condensed text-xs font-bold text-[#E9DCC5] uppercase tracking-wider leading-tight">
+          {label}
+        </span>
+        {sublabel && (
+          <span className="text-[10px] text-[#A2BAC0] font-medium mt-0.5">{sublabel}</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function PlayerMatchesView({ initialData }: PlayerMatchesViewProps) {
@@ -32,113 +82,82 @@ export function PlayerMatchesView({ initialData }: PlayerMatchesViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 pb-4 border-b border-[#E2D7C3]">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
-            Competition Records
+          <span className="font-barlow-condensed text-xs font-bold uppercase tracking-widest text-[#D95B24]">
+            Official Competition Records
           </span>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+          <h1 className="font-alfa text-2xl sm:text-3xl md:text-4xl text-[#132B32] uppercase tracking-tight mt-1">
             Match History &amp; Performance
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-[#5D6B6E] mt-0.5">
             Verified individual performance ratings recorded by academy coaching staff in finalized fixtures.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge
-            variant={data.totalMatchesPlayed >= 2 ? "success" : "default"}
-            size="md"
-          >
-            {data.totalMatchesPlayed} Finalized {data.totalMatchesPlayed === 1 ? "Match" : "Matches"}
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-barlow-condensed uppercase tracking-wider bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                data.totalMatchesPlayed >= 2 ? "bg-[#4ADE80]" : "bg-[#D95B24]"
+              }`}
+            />
+            <span>
+              {data.totalMatchesPlayed} Finalized {data.totalMatchesPlayed === 1 ? "Match" : "Matches"}
+            </span>
+          </span>
         </div>
       </div>
 
-      {/* Summary Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-              Matches Played
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
-                {data.totalMatchesPlayed}
-              </span>
-              <span className="text-xs text-slate-500">fixtures</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-              Average Score
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-900">
-                {data.averageScore !== null ? `${data.averageScore}` : "—"}
-              </span>
-              <span className="text-xs text-slate-400">/ 10</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-              Top Score
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-emerald-700">
-                {data.highestScore !== null ? `${data.highestScore}` : "—"}
-              </span>
-              <span className="text-xs text-slate-400">/ 10</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-              Lowest Score
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-700">
-                {data.lowestScore !== null ? `${data.lowestScore}` : "—"}
-              </span>
-              <span className="text-xs text-slate-400">/ 10</span>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Summary Scoreboard Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <StatScoreboardCard
+          label="Matches Played"
+          value={String(data.totalMatchesPlayed).padStart(2, "0")}
+          sublabel="Finalized Fixtures"
+        />
+        <StatScoreboardCard
+          label="Average Score"
+          value={data.averageScore !== null ? `${data.averageScore.toFixed(1)}` : "—"}
+          sublabel="/ 10 Scale"
+          highlight={data.averageScore !== null && data.averageScore >= 7.5}
+        />
+        <StatScoreboardCard
+          label="Top Score"
+          value={data.highestScore !== null ? `${data.highestScore.toFixed(1)}` : "—"}
+          sublabel="Peak Rating"
+        />
+        <StatScoreboardCard
+          label="Lowest Score"
+          value={data.lowestScore !== null ? `${data.lowestScore.toFixed(1)}` : "—"}
+          sublabel="Lowest Rating"
+        />
       </div>
 
       {/* Match History Table Card */}
-      <Card className="border border-slate-200 bg-white shadow-xs overflow-hidden">
-        <CardHeader className="border-b border-slate-100 bg-slate-50/50 pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-semibold text-slate-900">
-              Finalized Fixtures ({data.pagination.total})
-            </CardTitle>
-            <span className="text-xs text-slate-400">
-              Official 0–10 performance evaluation scale
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-xl overflow-hidden shadow-xs">
+        <div className="border-b border-[#E2D7C3] bg-[#FAF5EC] px-5 py-3.5 flex items-center justify-between">
+          <h2 className="font-alfa text-sm sm:text-base text-[#132B32] uppercase tracking-tight">
+            Finalized Fixtures ({data.pagination.total})
+          </h2>
+          <span className="font-barlow-condensed text-xs text-[#718E94] uppercase tracking-wider">
+            Official 0–10 performance evaluation scale
+          </span>
+        </div>
+
+        <div>
           {data.history.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-500">
-              <p className="font-semibold text-slate-700">No finalized matches on record</p>
+            <div className="py-16 text-center text-xs text-[#718E94]">
+              <p className="font-bold text-[#132B32] text-sm">No finalized matches on record</p>
               <p className="mt-1">
                 Once coaches finalize matches with your individual performance evaluation, they will be recorded here.
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#FAF5EC] font-barlow-condensed font-bold uppercase tracking-wider text-xs text-[#132B32] border-b border-[#E2D7C3]">
                   <tr>
                     <th scope="col" className="px-5 py-3">Match Date</th>
                     <th scope="col" className="px-5 py-3">Discipline</th>
@@ -146,33 +165,25 @@ export function PlayerMatchesView({ initialData }: PlayerMatchesViewProps) {
                     <th scope="col" className="px-5 py-3 text-right">Individual Score</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#EBE1D0]">
                   {data.history.map((record) => (
                     <tr
                       key={record.matchId}
-                      className="hover:bg-slate-50/80 transition-colors"
+                      className="hover:bg-[#FAF5EC]/70 transition-colors"
                     >
-                      <td className="px-5 py-3.5 font-semibold text-slate-800">
+                      <td className="px-5 py-3.5 font-bold text-[#132B32]">
                         {formatDateOnly(record.matchDate)}
                       </td>
                       <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-[#FAF5EC] border border-[#E8DEC9] text-[#132B32]">
                           {record.sportName}
                         </span>
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-slate-800">
-                        vs {record.opponentName}
+                      <td className="px-5 py-3.5 font-medium text-[#132B32]">
+                        vs. {record.opponentName}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded font-bold text-xs ${
-                            record.score >= 8.0
-                              ? "bg-emerald-100 text-emerald-800"
-                              : record.score >= 6.0
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-amber-100 text-amber-800"
-                          }`}
-                        >
+                        <span className="inline-flex items-center px-2.5 py-1 rounded font-alfa text-xs bg-[#E2F2E7] text-[#1F382B] border border-[#A6D5B4]">
                           {record.score.toFixed(1)} / 10
                         </span>
                       </td>
@@ -185,32 +196,32 @@ export function PlayerMatchesView({ initialData }: PlayerMatchesViewProps) {
 
           {/* Pagination Bar */}
           {data.pagination.totalPages > 1 && (
-            <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-500">
-              <span>
+            <div className="flex items-center justify-between px-5 py-3.5 border-t border-[#E2D7C3] bg-[#FAF5EC] text-xs text-[#5D6B6E]">
+              <span className="font-barlow-condensed font-semibold uppercase tracking-wider">
                 Page {data.pagination.page} of {data.pagination.totalPages}
               </span>
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={() => handlePageChange(data.pagination.page - 1)}
                   disabled={data.pagination.page <= 1 || loadingPage}
+                  className="px-3 py-1.5 rounded-lg bg-[#FFFDF8] border border-[#E2D7C3] font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] hover:bg-[#F3E8D2] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
                   Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
+                </button>
+                <button
+                  type="button"
                   onClick={() => handlePageChange(data.pagination.page + 1)}
                   disabled={data.pagination.page >= data.pagination.totalPages || loadingPage}
+                  className="px-3 py-1.5 rounded-lg bg-[#FFFDF8] border border-[#E2D7C3] font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] hover:bg-[#F3E8D2] disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
                 >
                   Next
-                </Button>
+                </button>
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

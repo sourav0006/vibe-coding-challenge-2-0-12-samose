@@ -1,17 +1,19 @@
+import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { SessionService } from "@/lib/services";
 import { AttendanceSheetView } from "@/features/attendance";
 import { objectIdSchema } from "@/lib/validation";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function SessionAttendancePage({
-  params,
-}: {
+interface SessionAttendancePageProps {
   params: Promise<{ id: string }>;
-}) {
+}
+
+async function SessionAttendanceContent({
+  params,
+}: SessionAttendancePageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -44,5 +46,13 @@ export default async function SessionAttendancePage({
     <AppShell user={user}>
       <AttendanceSheetView initialData={sheet} />
     </AppShell>
+  );
+}
+
+export default function SessionAttendancePage(props: SessionAttendancePageProps) {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <SessionAttendanceContent {...props} />
+    </Suspense>
   );
 }

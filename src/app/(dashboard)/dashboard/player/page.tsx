@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { PlayerPortalService, type PlayerDashboardOverviewDTO } from "@/lib/services";
 import { PlayerOverviewView } from "@/features/player";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function PlayerDashboardPage() {
+async function PlayerDashboardContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -39,5 +39,13 @@ export default async function PlayerDashboardPage() {
         </div>
       )}
     </AppShell>
+  );
+}
+
+export default function PlayerDashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <PlayerDashboardContent />
+    </Suspense>
   );
 }

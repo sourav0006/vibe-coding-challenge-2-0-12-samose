@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { CheckIcon } from "@/components/ui/icons";
@@ -8,12 +8,18 @@ import { CheckIcon } from "@/components/ui/icons";
 export interface ActivationCodeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  playerName: string;
-  playerEmail: string;
+  playerName?: string;
+  playerEmail?: string;
+  name?: string;
+  email?: string;
   sportName?: string;
   code: string;
   expiresAt: string | Date;
   title?: string;
+  description?: string;
+  roleLabel?: string;
+  onCreateAnother?: () => void;
+  createAnotherLabel?: string;
 }
 
 export function ActivationCodeModal({
@@ -21,12 +27,22 @@ export function ActivationCodeModal({
   onClose,
   playerName,
   playerEmail,
+  name,
+  email,
   sportName,
   code,
   expiresAt,
-  title = "Player Activation Code Generated",
+  title = "Activation Code Generated",
+  description,
+  roleLabel = "User",
+  onCreateAnother,
+  createAnotherLabel,
 }: ActivationCodeModalProps) {
   const [copied, setCopied] = useState(false);
+
+  const displayName = name || playerName || "";
+  const displayEmail = email || playerEmail || "";
+  const defaultDesc = `Provide this single-use code to the ${roleLabel.toLowerCase()} to activate their account.`;
 
   const handleCopy = async () => {
     try {
@@ -54,38 +70,38 @@ export function ActivationCodeModal({
       isOpen={isOpen}
       onClose={onClose}
       title={title}
-      description="Provide this single-use code to the player to activate their account."
+      description={description || defaultDesc}
       maxWidth="md"
     >
       <div className="space-y-5">
         {/* Account Details Summary */}
-        <div className="bg-[var(--color-background-subtle)] border border-[var(--color-border-subtle)] rounded-lg p-3.5 space-y-1.5 text-xs">
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5 text-xs">
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-secondary)]">Player Name:</span>
-            <span className="font-semibold text-[var(--color-text-primary)]">{playerName}</span>
+            <span className="text-slate-500">{roleLabel} Name:</span>
+            <span className="font-semibold text-slate-900">{displayName}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-secondary)]">Email Address:</span>
-            <span className="font-semibold text-[var(--color-text-primary)]">{playerEmail}</span>
+            <span className="text-slate-500">Email Address:</span>
+            <span className="font-semibold text-slate-900 font-mono">{displayEmail}</span>
           </div>
           {sportName && (
             <div className="flex justify-between">
-              <span className="text-[var(--color-text-secondary)]">Assigned Sport:</span>
-              <span className="font-semibold text-[var(--color-text-primary)]">{sportName}</span>
+              <span className="text-slate-500">Assigned Sport:</span>
+              <span className="font-semibold text-slate-900">{sportName}</span>
             </div>
           )}
           <div className="flex justify-between">
-            <span className="text-[var(--color-text-secondary)]">Code Expiration:</span>
-            <span className="font-medium text-[var(--color-warning)]">{formattedExpiry} (24 hours)</span>
+            <span className="text-slate-500">Code Expiration:</span>
+            <span className="font-semibold text-amber-700">{formattedExpiry} (24 hours)</span>
           </div>
         </div>
 
         {/* Activation Code Display */}
-        <div className="text-center py-4 px-6 bg-white border-2 border-dashed border-[var(--color-primary-soft)] rounded-xl space-y-3">
-          <span className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+        <div className="text-center py-5 px-6 bg-white border-2 border-dashed border-emerald-300 rounded-2xl space-y-3">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
             One-Time Activation Code
           </span>
-          <div className="font-mono text-3xl font-extrabold tracking-[0.25em] text-[var(--color-primary)] selection:bg-[var(--color-primary-soft)]">
+          <div className="font-mono text-3xl font-extrabold tracking-[0.25em] text-emerald-700 selection:bg-emerald-100">
             {code}
           </div>
           <div>
@@ -94,7 +110,7 @@ export function ActivationCodeModal({
               variant={copied ? "secondary" : "primary"}
               size="sm"
               onClick={handleCopy}
-              className="gap-2"
+              className="gap-2 font-semibold text-xs shadow-xs"
             >
               {copied ? (
                 <>
@@ -124,7 +140,7 @@ export function ActivationCodeModal({
         </div>
 
         {/* Security Warning Notice */}
-        <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
+        <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
           <svg
             className="w-4 h-4 mt-0.5 shrink-0 text-amber-600"
             fill="none"
@@ -139,15 +155,26 @@ export function ActivationCodeModal({
             />
           </svg>
           <div>
-            <strong>Important Security Notice:</strong> Share this activation code securely with the player. It can only be used once and expires in 24 hours. The plaintext code cannot be retrieved again after closing this window.
+            <strong>Important Security Notice:</strong> Share this activation code securely with the {roleLabel.toLowerCase()}. It can only be used once and expires in 24 hours. The plaintext code cannot be retrieved again after closing this window.
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end pt-2">
-          <Button variant="outline" size="sm" onClick={onClose}>
-            Done & Close
+        <div className="flex items-center justify-end gap-3 pt-2">
+          <Button variant="outline" size="sm" onClick={onClose} className="text-xs font-semibold">
+            {onCreateAnother ? "Done" : "Done & Close"}
           </Button>
+          {onCreateAnother && (
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={onCreateAnother}
+              className="text-xs font-semibold"
+            >
+              {createAnotherLabel || `Create Another ${roleLabel}`}
+            </Button>
+          )}
         </div>
       </div>
     </Modal>

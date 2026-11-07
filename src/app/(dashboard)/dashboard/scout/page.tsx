@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { ReadinessService, type SafeScoutPlayerDTO } from "@/lib/services";
 import { ScoutDiscoveryView } from "@/features/readiness";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function ScoutDashboardPage() {
+async function ScoutDashboardContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -41,5 +41,13 @@ export default async function ScoutDashboardPage() {
         initialAvailableSports={availableSports}
       />
     </AppShell>
+  );
+}
+
+export default function ScoutDashboardPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <ScoutDashboardContent />
+    </Suspense>
   );
 }

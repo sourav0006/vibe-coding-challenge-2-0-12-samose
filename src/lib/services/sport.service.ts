@@ -135,7 +135,7 @@ export class SportService {
       updateData.isActive = input.isActive;
     }
 
-    return SportModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).exec();
+    return SportModel.findByIdAndUpdate(id, updateData, { returnDocument: "after", runValidators: true }).exec();
   }
 
   /**
@@ -155,7 +155,7 @@ export class SportService {
           isActive: true,
         },
       },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
     ).exec() as Promise<ISport>;
   }
 }

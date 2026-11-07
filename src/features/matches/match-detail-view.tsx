@@ -3,10 +3,10 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MetricCard } from "@/components/ui/metric-card";
 import { formatDateOnly, cn } from "@/lib/utils";
 import type {
   MatchDetailsDTO,
@@ -307,11 +307,11 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
   return (
     <div className="space-y-6">
       {/* Navigation header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2D7C3]">
         <div className="flex items-center gap-3">
           <Link
             href="/dashboard/coach/matches"
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+            className="p-2 rounded-xl border border-[#DACBB4] bg-[#FFF9EF] text-[#7A6D5F] hover:text-[#132B32] hover:bg-[#F5EBD8] transition-colors"
             title="Back to Matches"
           >
             <svg
@@ -326,8 +326,8 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                vs. {details.match.opponentName}
+              <h1 className="text-2xl sm:text-3xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight">
+                {details.match.title || `vs. ${details.match.opponentName}`}
               </h1>
               {isFinalized ? (
                 <Badge variant="success">Finalized</Badge>
@@ -335,8 +335,13 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 <Badge variant="warning">Draft Fixture</Badge>
               )}
             </div>
-            <p className="text-sm text-slate-500">
-              {details.match.sportName} • {formatDateOnly(details.match.matchDate)}
+            <p className="text-xs sm:text-sm text-[#665C52] flex flex-wrap items-center gap-2 mt-1">
+              <span className="font-barlow-condensed font-bold uppercase tracking-wider text-[#1F5A38] bg-[#E5F4EB] px-2 py-0.5 rounded border border-[#C2E4CD]">
+                {details.match.sportName}
+              </span>
+              <span className="font-bold text-[#132B32]">vs. {details.match.opponentName}</span>
+              <span className="text-[#A39687]">•</span>
+              <span className="font-mono text-[#7A6D5F]">{formatDateOnly(details.match.matchDate)}</span>
             </p>
           </div>
         </div>
@@ -350,7 +355,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 size="md"
                 onClick={handleSaveScores}
                 disabled={savingScores || participants.length === 0 || hasInvalidScore}
-                className="text-slate-700 hover:bg-slate-50"
+                className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl text-xs h-9 px-4 cursor-pointer"
               >
                 {savingScores ? "Saving..." : "Save Scores"}
               </Button>
@@ -364,7 +369,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                   hasInvalidScore ||
                   details.sameDaySession?.status === "open"
                 }
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-xs"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl text-xs h-9 px-4 shadow-xs cursor-pointer"
               >
                 Finalize Match
               </Button>
@@ -375,9 +380,9 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
 
       {/* Finalized Status Banner */}
       {isFinalized && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="p-4 rounded-2xl bg-[#E5F4EB] border border-[#C2E4CD] text-[#1F5A38] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#1F382B] flex items-center justify-center text-[#4ADE80] shrink-0">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -389,10 +394,10 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-bold text-emerald-950">
-                Match Finalized & Records Immutable
+              <p className="text-sm font-alfa text-[#132B32] uppercase tracking-wide">
+                Match Finalized &amp; Records Immutable
               </p>
-              <p className="text-xs text-emerald-800">
+              <p className="text-xs text-[#1F5A38] mt-0.5">
                 {details.match.finalizedAt ? (
                   <>Locked on {formatDateOnly(details.match.finalizedAt)}. Individual player scores are now part of official performance history.</>
                 ) : (
@@ -401,7 +406,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
               </p>
             </div>
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100/80 rounded-md text-emerald-800 self-start sm:self-auto border border-emerald-300">
+          <span className="text-xs font-barlow-condensed font-bold uppercase tracking-wider px-3 py-1 bg-[#1F382B] rounded-full text-[#FFF9EF] self-start sm:self-auto border border-[#2E543E]">
             Official Record
           </span>
         </div>
@@ -411,16 +416,16 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
       {details.sameDaySession && (
         <div
           className={cn(
-            "p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed",
+            "p-4 rounded-2xl border flex items-start gap-3 text-xs leading-relaxed shadow-xs",
             details.sameDaySession.status === "open"
-              ? "bg-amber-50 border-amber-200 text-amber-900"
-              : "bg-blue-50 border-blue-200 text-blue-900"
+              ? "bg-[#FFF4DE] border-[#FAD79A] text-[#9A6700]"
+              : "bg-[#E3EAF0] border-[#CBD7E2] text-[#132B32]"
           )}
         >
-          <div className="w-5 h-5 mt-0.5 flex-shrink-0">
+          <div className="w-5 h-5 mt-0.5 shrink-0">
             {details.sameDaySession.status === "open" ? (
               <svg
-                className="w-5 h-5 text-amber-600"
+                className="w-5 h-5 text-[#D95B24]"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="2"
@@ -434,7 +439,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
               </svg>
             ) : (
               <svg
-                className="w-5 h-5 text-blue-600"
+                className="w-5 h-5 text-[#132B32]"
                 fill="none"
                 viewBox="0 0 24 24"
                 strokeWidth="2"
@@ -449,7 +454,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
             )}
           </div>
           <div>
-            <span className="font-bold block text-sm mb-0.5">
+            <span className="font-alfa text-xs uppercase tracking-wide block mb-0.5">
               {details.sameDaySession.status === "open"
                 ? "Pending Practice Session Attendance"
                 : "Same-Day Attendance Enforced"}
@@ -470,12 +475,12 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
 
       {/* Feedback alerts */}
       {errorMessage && (
-        <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center justify-between shadow-xs">
           <span>{errorMessage}</span>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-rose-600 hover:text-rose-800 text-xs font-bold"
+            className="text-red-600 hover:text-red-800 text-xs font-bold font-barlow-condensed cursor-pointer"
           >
             Dismiss
           </button>
@@ -483,12 +488,12 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
       )}
 
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between shadow-xs">
           <span>{successMessage}</span>
           <button
             type="button"
             onClick={() => setSuccessMessage(null)}
-            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold"
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold font-barlow-condensed cursor-pointer"
           >
             Dismiss
           </button>
@@ -496,90 +501,40 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
       )}
 
       {/* Aggregate Performance Metrics Card */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-              Participating Roster
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">
-                {currentStats.count}
-              </span>
-              <span className="text-xs text-slate-500">players</span>
-            </div>
-            <span className="text-[11px] text-slate-400 mt-0.5 block">
-              Eligible available: {availableEligiblePlayers.length}
-            </span>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <MetricCard
+          title="PARTICIPATING ROSTER"
+          value={String(currentStats.count).padStart(2, "0")}
+          subtitle={`Eligible available: ${availableEligiblePlayers.length}`}
+        />
 
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-              Average Performance
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-emerald-700">
-                {currentStats.average !== null ? currentStats.average.toFixed(1) : "—"}
-              </span>
-              {currentStats.average !== null && (
-                <span className="text-xs text-slate-500">/ 10</span>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-400 mt-0.5 block">
-              Individual score mean
-            </span>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="AVERAGE PERFORMANCE"
+          value={currentStats.average !== null ? `${currentStats.average.toFixed(1)} / 10` : "—"}
+          subtitle="Individual score mean"
+        />
 
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-              Highest Score
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">
-                {currentStats.highest !== null ? currentStats.highest.toFixed(1) : "—"}
-              </span>
-              {currentStats.highest !== null && (
-                <span className="text-xs text-slate-500">/ 10</span>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-400 mt-0.5 block">
-              Peak player rating
-            </span>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="HIGHEST SCORE"
+          value={currentStats.highest !== null ? `${currentStats.highest.toFixed(1)} / 10` : "—"}
+          subtitle="Peak player rating"
+        />
 
-        <Card className="border border-slate-200 bg-white shadow-xs">
-          <CardContent className="p-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-              Lowest Score
-            </span>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-slate-900">
-                {currentStats.lowest !== null ? currentStats.lowest.toFixed(1) : "—"}
-              </span>
-              {currentStats.lowest !== null && (
-                <span className="text-xs text-slate-500">/ 10</span>
-              )}
-            </div>
-            <span className="text-[11px] text-slate-400 mt-0.5 block">
-              Minimum player rating
-            </span>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="LOWEST SCORE"
+          value={currentStats.lowest !== null ? `${currentStats.lowest.toFixed(1)} / 10` : "—"}
+          subtitle="Minimum player rating"
+        />
       </div>
 
       {/* Main Score Sheet */}
-      <Card className="border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <CardHeader className="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div className="border border-[#E2D7C3] bg-[#FFFDF8] rounded-2xl shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2D7C3] bg-[#F5EBD8] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <CardTitle className="text-lg font-bold text-slate-900">
+            <h3 className="text-lg font-alfa text-[#132B32] uppercase tracking-wide">
               Individual Performance Sheet
-            </CardTitle>
-            <p className="text-xs text-slate-500 mt-0.5">
+            </h3>
+            <p className="text-xs text-[#665C52] mt-0.5">
               Scores represent individual technical and physical performance (0.0 to 10.0 scale). Team match outcomes are not tracked.
             </p>
           </div>
@@ -590,7 +545,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 size="sm"
                 variant="outline"
                 onClick={() => setShowAddForm(!showAddForm)}
-                className="text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl text-xs h-9 px-3.5 cursor-pointer"
               >
                 <svg
                   className="w-4 h-4 mr-1"
@@ -601,20 +556,20 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                {showAddForm ? "Close Roster Picker" : "Add Player to Fixture"}
+                {showAddForm ? "Close Roster Picker" : "+ Add Player to Fixture"}
               </Button>
             </div>
           )}
-        </CardHeader>
+        </div>
 
         {/* Add Player Drawer / Inline Form */}
         {!isFinalized && showAddForm && (
-          <div className="p-4 bg-emerald-50/40 border-b border-emerald-100">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900 mb-3">
+          <div className="p-4 bg-[#FFF9EF] border-b border-[#E2D7C3]">
+            <h4 className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-3">
               Select Eligible Player
             </h4>
             {availableEligiblePlayers.length === 0 ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[#7A6D5F]">
                 All eligible active players for this sport have already been added to the sheet.
               </p>
             ) : (
@@ -625,7 +580,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 <div className="flex-1">
                   <label
                     htmlFor="eligible-player-select"
-                    className="block text-xs font-semibold text-slate-700 mb-1"
+                    className="block text-xs font-barlow-condensed font-bold text-[#132B32] uppercase tracking-wider mb-1"
                   >
                     Eligible Roster ({availableEligiblePlayers.length} available)
                   </label>
@@ -633,7 +588,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                     id="eligible-player-select"
                     value={selectedPlayerId}
                     onChange={(e) => setSelectedPlayerId(e.target.value)}
-                    className="w-full text-xs rounded-md border border-slate-300 bg-white p-2 text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    className="w-full text-xs rounded-xl border border-[#DACBB4] bg-[#FFF9EF] p-2 text-[#132B32] focus:outline-none focus:border-[#D95B24]"
                     required
                   >
                     <option value="">-- Choose an eligible player --</option>
@@ -654,7 +609,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 <div className="w-full sm:w-36">
                   <label
                     htmlFor="new-player-score"
-                    className="block text-xs font-semibold text-slate-700 mb-1"
+                    className="block text-xs font-barlow-condensed font-bold text-[#132B32] uppercase tracking-wider mb-1"
                   >
                     Score (0.0 - 10.0)
                   </label>
@@ -666,7 +621,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                     max="10"
                     value={newPlayerScore}
                     onChange={(e) => setNewPlayerScore(e.target.value)}
-                    className="text-xs h-9"
+                    className="text-xs h-9 bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
                     required
                   />
                 </div>
@@ -675,9 +630,9 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                   type="submit"
                   size="sm"
                   disabled={addingParticipant || !selectedPlayerId}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-9"
+                  className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl text-xs h-9 px-4 cursor-pointer"
                 >
-                  {addingParticipant ? "Adding..." : "Add to Sheet"}
+                  {addingParticipant ? "Adding..." : "+ Add to Sheet"}
                 </Button>
               </form>
             )}
@@ -685,16 +640,16 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
         )}
 
         {/* Filter / Search Bar */}
-        <div className="p-3 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between gap-3">
+        <div className="p-3 border-b border-[#E2D7C3] bg-[#F5EBD8]/50 flex items-center justify-between gap-3">
           <div className="relative flex-1 max-w-sm">
             <Input
               placeholder="Search participating player by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="text-xs h-8 pl-8"
+              className="text-xs h-8 pl-8 bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
             />
             <svg
-              className="w-4 h-4 text-slate-400 absolute left-2.5 top-2"
+              className="w-4 h-4 text-[#7A6D5F] absolute left-2.5 top-2"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="2"
@@ -707,7 +662,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
               />
             </svg>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs font-barlow-condensed font-bold text-[#7A6D5F]">
             {filteredParticipants.length} of {participants.length} shown
           </span>
         </div>
@@ -715,7 +670,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
         {/* Table Content */}
         {participants.length === 0 ? (
           <div className="p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
+            <div className="w-12 h-12 rounded-full bg-[#F5EBD8] border border-[#E2D7C3] flex items-center justify-center mx-auto text-[#7A6D5F]">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -730,24 +685,24 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 />
               </svg>
             </div>
-            <h4 className="text-sm font-semibold text-slate-800">No Participants Added Yet</h4>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <h4 className="text-sm font-alfa text-[#132B32] uppercase">No Participants Added Yet</h4>
+            <p className="text-xs text-[#665C52] max-w-sm mx-auto">
               Select participating players from the eligible roster above and record their individual scores. A match requires at least one participant to be finalized.
             </p>
             {!isFinalized && (
               <Button
                 size="sm"
                 onClick={() => setShowAddForm(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl text-xs"
               >
-                Add Participating Players
+                + Add Participating Players
               </Button>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase font-semibold text-slate-500 tracking-wider">
+            <table className="w-full text-left text-sm text-[#132B32]">
+              <thead className="bg-[#F5EBD8] border-b border-[#E2D7C3] text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32]">
                 <tr>
                   <th scope="col" className="px-5 py-3.5">
                     Player Name
@@ -768,7 +723,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#EAE0CF]/60 font-normal">
                 {filteredParticipants.map((p) => {
                   const currentScoreVal = Number(scores[p.playerId] ?? p.score);
                   const isScoreInvalid =
@@ -778,24 +733,24 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                     <tr
                       key={p.playerId}
                       className={cn(
-                        "hover:bg-slate-50/70 transition-colors",
+                        "hover:bg-[#F5EBD8]/40 transition-colors",
                         isScoreInvalid && "bg-rose-50/50"
                       )}
                     >
-                      <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
+                      <td className="px-5 py-4 font-bold text-[#132B32] whitespace-nowrap">
                         <Link
                           href={`/dashboard/coach/players/${p.playerId}`}
-                          className="hover:text-emerald-700 hover:underline"
+                          className="hover:text-[#D95B24] transition-colors"
                         >
                           {p.fullName}
                         </Link>
                       </td>
-                      <td className="px-5 py-4 text-xs text-slate-500 whitespace-nowrap">
+                      <td className="px-5 py-4 text-xs text-[#665C52] font-mono whitespace-nowrap">
                         {p.email}
                       </td>
                       <td className="px-5 py-4 text-center whitespace-nowrap">
                         {isFinalized ? (
-                          <span className="inline-flex items-center justify-center font-bold text-sm text-emerald-800 bg-emerald-50 px-3 py-1 rounded-md border border-emerald-200">
+                          <span className="inline-flex items-center justify-center font-alfa text-xs text-[#1F5A38] bg-[#E5F4EB] px-3 py-1 rounded-lg border border-[#C2E4CD]">
                             {Number(p.score).toFixed(1)} / 10
                           </span>
                         ) : (
@@ -808,29 +763,29 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                               value={scores[p.playerId] ?? ""}
                               onChange={(e) => handleScoreChange(p.playerId, e.target.value)}
                               className={cn(
-                                "w-24 text-center font-bold text-sm h-8",
+                                "w-24 text-center font-alfa text-sm h-8 bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]",
                                 isScoreInvalid && "border-rose-500 text-rose-700 bg-rose-50"
                               )}
                             />
-                            <span className="text-xs text-slate-400">/ 10</span>
+                            <span className="text-xs text-[#7A6D5F] font-mono">/ 10</span>
                           </div>
                         )}
                       </td>
                       <td className="px-5 py-4 text-center whitespace-nowrap">
                         {!isNaN(currentScoreVal) && currentScoreVal >= 8 ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-barlow-condensed font-bold uppercase tracking-wider bg-[#E5F4EB] text-[#1F5A38] border border-[#C2E4CD]">
                             Outstanding
                           </span>
                         ) : !isNaN(currentScoreVal) && currentScoreVal >= 6 ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-100 text-blue-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-barlow-condensed font-bold uppercase tracking-wider bg-[#E3EAF0] text-[#132B32] border border-[#CBD7E2]">
                             Competent
                           </span>
                         ) : !isNaN(currentScoreVal) && currentScoreVal >= 4 ? (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-barlow-condensed font-bold uppercase tracking-wider bg-[#FFF4DE] text-[#9A6700] border border-[#FAD79A]">
                             Developing
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-600">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-barlow-condensed font-bold uppercase tracking-wider bg-[#F5EBD8] text-[#665C52] border border-[#DACBB4]">
                             Needs Support
                           </span>
                         )}
@@ -841,7 +796,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                             type="button"
                             onClick={() => handleRemoveParticipant(p.playerId)}
                             disabled={removingPlayerId === p.playerId}
-                            className="text-xs text-rose-600 hover:text-rose-800 font-semibold p-1 hover:bg-rose-50 rounded"
+                            className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#991B1B] hover:text-[#7F1D1D] p-1 hover:bg-[#FEE2E2] rounded cursor-pointer"
                             title="Remove participant"
                           >
                             {removingPlayerId === p.playerId ? "Removing..." : "Remove"}
@@ -855,22 +810,22 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Finalize Confirmation Modal */}
       {showFinalizeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full border border-slate-200 overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-[#FFFDF8] rounded-2xl shadow-xl max-w-md w-full border border-[#E2D7C3] overflow-hidden">
+            <div className="p-5 border-b border-[#E2D7C3] bg-[#F5EBD8]">
+              <h3 className="text-lg font-alfa text-[#132B32] uppercase tracking-wide">
                 Confirm Match Finalization
               </h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-[#665C52] mt-1">
                 Permanent lock and individual performance scoring commit.
               </p>
             </div>
-            <div className="p-5 space-y-4 text-sm text-slate-600">
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs space-y-1">
+            <div className="p-5 space-y-4 text-sm text-[#132B32]">
+              <div className="p-3 bg-[#FFF4DE] border border-[#FAD79A] rounded-xl text-[#9A6700] text-xs space-y-1">
                 <span className="font-bold block">Permanent Immutability Warning:</span>
                 <p>
                   Once finalized, this match and all {participants.length} recorded individual player scores will become <strong>permanently immutable</strong>.
@@ -881,38 +836,45 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
               </div>
 
               <div className="text-xs space-y-1">
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span className="text-slate-500">Opponent:</span>
-                  <span className="font-semibold text-slate-800">
+                <div className="flex justify-between py-1 border-b border-[#E2D7C3]/60">
+                  <span className="text-[#665C52]">Match Title:</span>
+                  <span className="font-bold text-[#132B32]">
+                    {details.match.title || "Match Fixture"}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-[#E2D7C3]/60">
+                  <span className="text-[#665C52]">Opponent:</span>
+                  <span className="font-bold text-[#132B32]">
                     {details.match.opponentName}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span className="text-slate-500">Match Date:</span>
-                  <span className="font-semibold text-slate-800">
+                <div className="flex justify-between py-1 border-b border-[#E2D7C3]/60">
+                  <span className="text-[#665C52]">Match Date:</span>
+                  <span className="font-mono font-bold text-[#132B32]">
                     {formatDateOnly(details.match.matchDate)}
                   </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-100">
-                  <span className="text-slate-500">Total Participants:</span>
-                  <span className="font-semibold text-slate-800">
+                <div className="flex justify-between py-1 border-b border-[#E2D7C3]/60">
+                  <span className="text-[#665C52]">Total Participants:</span>
+                  <span className="font-bold text-[#132B32]">
                     {participants.length} players
                   </span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-slate-500">Roster Average Score:</span>
-                  <span className="font-bold text-emerald-700">
+                  <span className="text-[#665C52]">Roster Average Score:</span>
+                  <span className="font-alfa text-xs text-[#1F5A38]">
                     {currentStats.average !== null ? currentStats.average.toFixed(1) : "—"} / 10
                   </span>
                 </div>
               </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+            <div className="p-4 bg-[#F5EBD8] border-t border-[#E2D7C3] flex items-center justify-end gap-3">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowFinalizeModal(false)}
                 disabled={finalizing}
+                className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl"
               >
                 Cancel
               </Button>
@@ -920,7 +882,7 @@ export function MatchDetailView({ initialDetails }: MatchDetailViewProps) {
                 size="sm"
                 onClick={handleFinalizeMatch}
                 disabled={finalizing}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl"
               >
                 {finalizing ? "Finalizing..." : "Yes, Finalize Permanently"}
               </Button>

@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { PageHeader } from "@/components/ui/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { LoadingState } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MetricCard } from "@/components/ui/metric-card";
+import {
+  TrophyIcon,
+  PlusIcon,
+  UsersIcon,
+  CalendarIcon,
+} from "@/components/ui/icons";
 
 export interface SportItem {
   id: string;
@@ -152,7 +157,7 @@ export function SportsCatalogueView({
     setSubmitting(true);
     try {
       const res = await fetch(`/api/coach/sports/${activeSportForEdit.id}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: trimmedName,
@@ -201,24 +206,69 @@ export function SportsCatalogueView({
     }
   };
 
+  const totalSports = sports?.length ?? 0;
+  const activeSportsCount = sports?.filter((s) => s.isActive).length ?? 0;
+  const totalEnrolledPlayers = sports?.reduce((acc, s) => acc + (s.playerCount || 0), 0) ?? 0;
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Sports Catalogue"
-        description="Configure sports disciplines, manage active status, and view enrolled player metrics."
-        actions={
-          <Button size="sm" variant="primary" onClick={handleOpenAddModal} className="gap-1.5 text-xs">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>Add Sport</span>
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-[#E2D7C3]">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold tracking-wider uppercase bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+              <TrophyIcon className="w-3.5 h-3.5 text-[#4ADE80]" />
+              DISCIPLINES &amp; CATALOGUE
+            </span>
+            <span className="text-xs font-barlow-condensed font-semibold text-[#665C52]">
+              • {totalSports} SPORTS CONFIGURED
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight mt-1">
+            Academy Sports Catalogue
+          </h1>
+          <p className="text-xs sm:text-sm text-[#665C52]">
+            Configure athletic disciplines, monitor enrolled player counts, and control active status.
+          </p>
+        </div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <Button
+            size="sm"
+            onClick={handleOpenAddModal}
+            className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs sm:text-sm h-9 px-4 rounded-xl shadow-xs gap-1.5 cursor-pointer"
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+            <span>+ Add Sport</span>
           </Button>
-        }
-      />
+        </div>
+      </div>
 
+      {/* Scoreboard KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <MetricCard
+          title="TOTAL SPORTS"
+          value={String(totalSports).padStart(2, "0")}
+          subtitle="Academy athletic disciplines"
+        />
+        <MetricCard
+          title="ACTIVE DISCIPLINES"
+          value={String(activeSportsCount).padStart(2, "0")}
+          subtitle="Open for player enrolment"
+        />
+        <MetricCard
+          title="ENROLLED ATHLETES"
+          value={String(totalEnrolledPlayers).padStart(2, "0")}
+          subtitle="Players assigned to sports"
+        />
+      </div>
+
+      {/* Error state */}
       {error && (
-        <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center justify-between">
-          <span>{error}</span>
+        <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-red-500" />
+            <span>{error}</span>
+          </div>
           <Button size="sm" variant="outline" onClick={fetchSports}>
             Retry
           </Button>
@@ -228,10 +278,10 @@ export function SportsCatalogueView({
       {loading && !sports ? (
         <LoadingState message="Loading sports catalogue..." />
       ) : sports && sports.length > 0 ? (
-        <div className="bg-white border border-[var(--color-border)] rounded-xl overflow-hidden shadow-xs">
+        <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-[var(--color-background-subtle)] border-b border-[var(--color-border)] text-[var(--color-text-secondary)] uppercase font-semibold">
+              <thead className="bg-[#F5EBD8] border-b border-[#E2D7C3] text-[#132B32] font-barlow-condensed font-bold uppercase tracking-wider text-xs sm:text-[13px]">
                 <tr>
                   <th scope="col" className="py-3.5 px-4">Sport Name</th>
                   <th scope="col" className="py-3.5 px-4">Status</th>
@@ -241,7 +291,7 @@ export function SportsCatalogueView({
                   <th scope="col" className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border-subtle)] text-[var(--color-text-primary)]">
+              <tbody className="divide-y divide-[#EAE0CF]/60 text-slate-700">
                 {sports.map((sport) => {
                   const createdDate = new Date(sport.createdAt).toLocaleDateString("en-US", {
                     month: "short",
@@ -250,46 +300,59 @@ export function SportsCatalogueView({
                   });
 
                   return (
-                    <tr key={sport.id} className="hover:bg-[var(--color-background-subtle)]/50 transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-[var(--color-text-primary)] text-sm">
-                        {sport.name}
+                    <tr key={sport.id} className="hover:bg-[#F5EBD8]/50 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-[#132B32] text-sm">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-lg bg-[#EEDDC5] text-[#132B32] border border-[#DACBB4] flex items-center justify-center text-xs">
+                            <TrophyIcon className="w-4 h-4" />
+                          </span>
+                          <span className="font-bold text-[#132B32]">{sport.name}</span>
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         {sport.isActive ? (
-                          <Badge variant="success" size="sm" dot>Active</Badge>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-barlow-condensed font-bold bg-[#E5F4EB] text-[#1F5A38] border border-[#99C7AB]/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#1F5A38]" />
+                            <span>Active</span>
+                          </span>
                         ) : (
-                          <Badge variant="default" size="sm">Inactive</Badge>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-barlow-condensed font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                            Inactive
+                          </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-semibold text-[var(--color-text-primary)]">
-                          {sport.playerCount}
-                        </span>{" "}
-                        <span className="text-[var(--color-text-muted)] text-[11px]">
-                          {sport.playerCount === 1 ? "player" : "players"}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 font-barlow-condensed font-bold text-[#132B32] bg-[#F7EFE0] border border-[#DACBB4] px-2.5 py-0.5 rounded-full text-xs">
+                          <UsersIcon className="w-3.5 h-3.5 text-[#7A6D5F]" />
+                          {sport.playerCount} {sport.playerCount === 1 ? "athlete" : "athletes"}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-[var(--color-text-secondary)] max-w-xs truncate">
+                      <td className="py-3.5 px-4 text-[#665C52] max-w-xs truncate text-[11px]">
                         {sport.description || "—"}
                       </td>
-                      <td className="py-3.5 px-4 text-[var(--color-text-muted)] font-mono text-[11px]">
-                        {createdDate}
+                      <td className="py-3.5 px-4 text-[#7A6D5F] text-[11px] font-barlow-condensed whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <CalendarIcon className="w-3.5 h-3.5 text-[#7A6D5F]" />
+                          <span>{createdDate}</span>
+                        </div>
                       </td>
-                      <td className="py-3.5 px-4 text-right space-x-1">
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap space-x-2">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => handleOpenEditModal(sport)}
-                          className="text-xs h-7 px-2"
+                          className="font-barlow-condensed font-bold text-xs h-8 px-2.5 text-[#132B32] bg-[#FFF9EF] border-[#DACBB4] hover:bg-[#F5EBD8] hover:text-[#D95B24] rounded-lg"
                         >
                           Edit
                         </Button>
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={() => setConfirmToggleSport(sport)}
-                          className={`text-xs h-7 px-2 ${
-                            sport.isActive ? "text-amber-600 hover:text-amber-700" : "text-emerald-600 hover:text-emerald-700"
+                          className={`font-barlow-condensed font-bold text-xs h-8 px-2.5 rounded-lg ${
+                            sport.isActive
+                              ? "text-amber-800 bg-amber-50/80 border-amber-200 hover:bg-amber-100"
+                              : "text-emerald-800 bg-emerald-50/80 border-emerald-200 hover:bg-emerald-100"
                           }`}
                         >
                           {sport.isActive ? "Deactivate" : "Activate"}
@@ -307,7 +370,11 @@ export function SportsCatalogueView({
           title="No Sports Found"
           description="The academy sports catalogue is currently empty. Add your first sport to begin enrolling players."
           action={
-            <Button size="sm" variant="primary" onClick={handleOpenAddModal}>
+            <Button
+              size="sm"
+              onClick={handleOpenAddModal}
+              className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold"
+            >
               Add Sport
             </Button>
           }
@@ -331,20 +398,21 @@ export function SportsCatalogueView({
 
           <Input
             label="Sport Name *"
-            placeholder="e.g. Football, Basketball, Swimming"
+            placeholder="e.g. Football, Basketball, Volleyball"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             autoFocus
             helperText="Minimum 2 characters, maximum 40 characters. Case-insensitive duplicate prevention is enforced."
+            className="bg-[#FFF9EF] border-[#DACBB4] focus:border-[#D95B24] rounded-xl text-[#132B32]"
           />
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--color-text-primary)] mb-1">
+            <label className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1">
               Description (Optional)
             </label>
             <textarea
-              className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all resize-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-[#DACBB4] bg-[#FFF9EF] text-[#132B32] focus:outline-none focus:ring-2 focus:ring-[#D95B24] transition-all resize-none"
               rows={3}
               placeholder="Brief details regarding this sport or academy curriculum..."
               value={description}
@@ -360,16 +428,17 @@ export function SportsCatalogueView({
               size="sm"
               onClick={() => setIsAddOpen(false)}
               disabled={submitting}
+              className="font-barlow-condensed font-bold text-xs text-[#132B32] bg-[#FFF9EF] border-[#DACBB4]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              variant="primary"
               size="sm"
-              isLoading={submitting}
+              disabled={submitting}
+              className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs"
             >
-              Save Sport
+              {submitting ? "Saving..." : "Save Sport"}
             </Button>
           </div>
         </form>
@@ -399,14 +468,15 @@ export function SportsCatalogueView({
             onChange={(e) => setName(e.target.value)}
             required
             helperText="Renaming a sport retains all historical player associations."
+            className="bg-[#FFF9EF] border-[#DACBB4] focus:border-[#D95B24] rounded-xl text-[#132B32]"
           />
 
           <div>
-            <label className="block text-xs font-semibold text-[var(--color-text-primary)] mb-1">
+            <label className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1">
               Description (Optional)
             </label>
             <textarea
-              className="w-full px-3 py-2 text-sm rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all resize-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-[#DACBB4] bg-[#FFF9EF] text-[#132B32] focus:outline-none focus:ring-2 focus:ring-[#D95B24] transition-all resize-none"
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -424,16 +494,17 @@ export function SportsCatalogueView({
                 setActiveSportForEdit(null);
               }}
               disabled={submitting}
+              className="font-barlow-condensed font-bold text-xs text-[#132B32] bg-[#FFF9EF] border-[#DACBB4]"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              variant="primary"
               size="sm"
-              isLoading={submitting}
+              disabled={submitting}
+              className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs"
             >
-              Update Sport
+              {submitting ? "Updating..." : "Update Sport"}
             </Button>
           </div>
         </form>
@@ -457,7 +528,7 @@ export function SportsCatalogueView({
       >
         <div className="space-y-4">
           {confirmToggleSport && confirmToggleSport.playerCount > 0 && confirmToggleSport.isActive && (
-            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+            <div className="p-3 rounded-xl bg-[#FFF4DE] border border-[#F0D08A] text-[#9A6700] text-xs font-medium">
               <strong>Notice:</strong> {confirmToggleSport.playerCount} currently enrolled {confirmToggleSport.playerCount === 1 ? "player" : "players"} will remain associated with this sport.
             </div>
           )}
@@ -468,14 +539,19 @@ export function SportsCatalogueView({
               size="sm"
               onClick={() => setConfirmToggleSport(null)}
               disabled={togglingStatus}
+              className="font-barlow-condensed font-bold text-xs text-[#132B32] bg-[#FFF9EF] border-[#DACBB4]"
             >
               Cancel
             </Button>
             <Button
-              variant={confirmToggleSport?.isActive ? "secondary" : "primary"}
               size="sm"
               onClick={handleToggleStatus}
-              isLoading={togglingStatus}
+              disabled={togglingStatus}
+              className={`font-barlow-condensed font-bold text-xs text-white ${
+                confirmToggleSport?.isActive
+                  ? "bg-amber-700 hover:bg-amber-800"
+                  : "bg-[#1B4D3E] hover:bg-[#143B30]"
+              }`}
             >
               {confirmToggleSport?.isActive ? "Confirm Deactivation" : "Confirm Activation"}
             </Button>

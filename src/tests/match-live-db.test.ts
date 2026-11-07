@@ -89,33 +89,52 @@ async function runLiveDbIntegrationTests() {
   try {
     const testDate = "2026-11-20";
     const testOpponent = `Atlas FC Test ${Date.now()}`;
+    const testTitle = `Championship Game 1 ${Date.now()}`;
 
     // 3. Create a Match
     console.log("\n--- Testing Match Creation ---");
     const match = await MatchService.createMatch({
+      title: testTitle,
       sportId: sport._id.toString(),
       matchDate: testDate,
       opponentName: testOpponent,
     });
     testMatchId = match._id.toString();
     assert.equal(match.status, "draft");
+    assert.equal(match.title, testTitle);
     assert.equal(match.opponentName, testOpponent);
     console.log(`✓ Match created with Draft status (${testMatchId})`);
 
-    // 4. Test Duplicate Prevention
-    console.log("\n--- Testing Duplicate Match Prevention ---");
+    // 4. Test Duplicate Prevention & Same-Day Unlimited Fixtures
+    console.log("\n--- Testing Duplicate Match Prevention & Same-Day Scheduling ---");
     let duplicateRejected = false;
     try {
       await MatchService.createMatch({
+        title: testTitle,
         sportId: sport._id.toString(),
         matchDate: testDate,
         opponentName: testOpponent,
       });
     } catch (err) {
       duplicateRejected = true;
+      assert.equal(
+        (err as Error).message,
+        "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+      );
       console.log(`✓ Duplicate match correctly rejected: ${(err as Error).message}`);
     }
     assert.ok(duplicateRejected, "Duplicate match must be rejected");
+
+    // Second fixture with different title against same opponent on same date MUST succeed
+    const match2 = await MatchService.createMatch({
+      title: `Championship Game 2 ${Date.now()}`,
+      sportId: sport._id.toString(),
+      matchDate: testDate,
+      opponentName: testOpponent,
+    });
+    assert.ok(match2._id, "Second fixture on same day with different title must succeed");
+    console.log(`✓ Second match fixture on same date succeeded: ${match2.title} (${match2._id.toString()})`);
+    await MatchModel.findByIdAndDelete(match2._id);
 
     // 5. Test Same-Day Attendance Rules
     console.log("\n--- Testing Same-Day Attendance Constraints ---");

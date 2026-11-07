@@ -31,12 +31,20 @@ export interface PlayerDashboardOverviewDTO {
     totalApplicableClosedSessions: number;
     presentSessions: number;
     absentSessions: number;
+    history?: PlayerAttendanceRecordDTO[];
   };
   matches: {
     finalizedMatchesPlayed: number;
     averageScore: number | null;
     highestScore: number | null;
     lowestScore: number | null;
+    recentMatch?: {
+      matchId: string;
+      matchDate: string;
+      sportName: string;
+      opponentName: string;
+      score: number;
+    } | null;
   };
   readiness: {
     status: "ready" | "not_ready";
@@ -155,6 +163,20 @@ export class PlayerPortalService {
       dateJoined: (userObj?.createdAt || player.createdAt).toISOString(),
     };
 
+    const recentMatch =
+      matchStats && matchStats.history.length > 0
+        ? {
+            matchId: matchStats.history[0].matchId,
+            matchDate:
+              matchStats.history[0].matchDate instanceof Date
+                ? matchStats.history[0].matchDate.toISOString()
+                : String(matchStats.history[0].matchDate),
+            sportName: matchStats.history[0].sportName,
+            opponentName: matchStats.history[0].opponentName,
+            score: matchStats.history[0].score,
+          }
+        : null;
+
     return {
       profile,
       attendance: {
@@ -163,12 +185,14 @@ export class PlayerPortalService {
         totalApplicableClosedSessions: attendanceStats ? attendanceStats.totalSessions : 0,
         presentSessions: attendanceStats ? attendanceStats.presentCount : 0,
         absentSessions: attendanceStats ? attendanceStats.absentCount : 0,
+        history: attendanceStats ? attendanceStats.history : [],
       },
       matches: {
         finalizedMatchesPlayed: matchStats ? matchStats.totalMatchesPlayed : 0,
         averageScore: matchStats ? matchStats.averageScore : null,
         highestScore: matchStats ? matchStats.highestScore : null,
         lowestScore: matchStats ? matchStats.lowestScore : null,
+        recentMatch,
       },
       readiness: {
         status: readinessEvaluation?.readinessStatus || "not_ready",

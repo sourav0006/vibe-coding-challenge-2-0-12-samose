@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { MatchService } from "@/lib/services";
 import { objectIdSchema } from "@/lib/validation";
@@ -20,6 +21,16 @@ export async function PATCH(
     }
 
     const finalizedMatch = await MatchService.finalizeMatch(id);
+
+    try {
+      revalidatePath("/dashboard/coach/readiness");
+      revalidatePath("/dashboard/coach");
+      revalidatePath("/dashboard/coach/matches");
+      revalidatePath(`/dashboard/coach/matches/${id}`);
+      revalidatePath("/dashboard/scout/discover");
+      revalidatePath("/dashboard/player/matches");
+      revalidatePath("/dashboard/player");
+    } catch {}
 
     return NextResponse.json(
       {

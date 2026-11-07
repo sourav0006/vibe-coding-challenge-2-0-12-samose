@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { MetricCard } from "@/components/ui/metric-card";
 import { formatDateOnly, cn } from "@/lib/utils";
 import type { SessionAttendanceSheetDTO } from "@/lib/services";
 
@@ -14,6 +15,7 @@ export interface AttendanceSheetViewProps {
 }
 
 export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
+  const router = useRouter();
   const [data, setData] = useState<SessionAttendanceSheetDTO>(initialData);
   const [filterTab, setFilterTab] = useState<"all" | "unmarked" | "present" | "absent">("all");
   const [search, setSearch] = useState("");
@@ -161,6 +163,7 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
 
       setIsCloseModalOpen(false);
       await refreshSheet();
+      router.refresh();
       setSuccessMessage("Session has been finalized and closed. Attendance records are now immutable.");
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : "Error closing session.");
@@ -198,21 +201,21 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
       <div>
         <Link
           href="/dashboard/coach/sessions"
-          className="text-xs font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors inline-flex items-center gap-1"
+          className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#7A6D5F] hover:text-[#D95B24] transition-colors inline-flex items-center gap-1.5"
         >
           &larr; Back to Practice Sessions
         </Link>
       </div>
 
       {/* Session Title Header Card */}
-      <div className="bg-white rounded-xl border border-[var(--color-border)] p-5 sm:p-6 shadow-xs">
+      <div className="bg-[#FFFDF8] rounded-2xl border border-[#E2D7C3] p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl sm:text-3xl font-black text-[var(--color-text-primary)] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight">
                 {formattedDate} &mdash; Attendance Sheet
               </h1>
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-emerald-200">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold uppercase tracking-wider bg-[#E5F4EB] text-[#1F5A38] border border-[#C2E4CD]">
                 {data.session.sportName}
               </span>
               {isClosed ? (
@@ -225,7 +228,7 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
                 </Badge>
               )}
             </div>
-            <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-secondary)]">
+            <p className="mt-1 text-xs sm:text-sm text-[#665C52]">
               {isClosed
                 ? `Attendance was finalized on ${new Date(data.session.closedAt || data.session.updatedAt).toLocaleString("en-US")}. Records are read-only.`
                 : "Mark roll-call for all assigned players. Session can be finalized once all players have an explicit status."}
@@ -234,13 +237,13 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
 
           {/* Action button */}
           {!isClosed && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="primary"
                 size="md"
                 disabled={!data.stats.isComplete || closing}
                 onClick={() => setIsCloseModalOpen(true)}
-                className="text-xs font-bold shadow-xs whitespace-nowrap"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-xs sm:text-sm h-9 px-4 rounded-xl shadow-xs whitespace-nowrap cursor-pointer"
               >
                 Close &amp; Finalize Session
               </Button>
@@ -250,8 +253,8 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
 
         {/* Closed Banner */}
         {isClosed && (
-          <div className="mt-4 p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700 flex items-center gap-2 font-medium">
-            <svg className="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <div className="mt-4 p-3 rounded-xl bg-[#F5EBD8] border border-[#E2D7C3] text-xs text-[#132B32] flex items-center gap-2 font-medium">
+            <svg className="w-4 h-4 text-[#7A6D5F] shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
             </svg>
             <span>
@@ -262,152 +265,96 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {/* Applicable Players */}
-        <Card variant="bordered" className="bg-white">
-          <CardHeader className="pb-1">
-            <span className="text-[11px] font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">
-              Applicable Roster
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-[var(--color-text-primary)]">
-              {data.stats.applicableCount}
-            </div>
-            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">Eligible sport members</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+        <MetricCard
+          title="APPLICABLE ROSTER"
+          value={String(data.stats.applicableCount).padStart(2, "0")}
+          subtitle="Eligible sport members"
+        />
 
-        {/* Present Count */}
-        <Card variant="bordered" className="bg-emerald-50/50 border-emerald-200">
-          <CardHeader className="pb-1">
-            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
-              Marked Present
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-emerald-700">
-              {data.stats.presentCount}
-            </div>
-            <p className="text-[11px] text-emerald-600/80 mt-0.5">
-              {data.stats.applicableCount > 0
-                ? `${Math.round((data.stats.presentCount / data.stats.applicableCount) * 100)}% attendance rate`
-                : "No roster"}
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="MARKED PRESENT"
+          value={String(data.stats.presentCount).padStart(2, "0")}
+          subtitle={
+            data.stats.applicableCount > 0
+              ? `${Math.round((data.stats.presentCount / data.stats.applicableCount) * 100)}% attendance rate`
+              : "No roster"
+          }
+        />
 
-        {/* Absent Count */}
-        <Card variant="bordered" className="bg-rose-50/50 border-rose-200">
-          <CardHeader className="pb-1">
-            <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider">
-              Marked Absent
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-black text-rose-700">
-              {data.stats.absentCount}
-            </div>
-            <p className="text-[11px] text-rose-600/80 mt-0.5">Documented absences</p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="MARKED ABSENT"
+          value={String(data.stats.absentCount).padStart(2, "0")}
+          subtitle="Documented absences"
+        />
 
-        {/* Unmarked Count */}
-        <Card
-          variant="bordered"
-          className={cn(
-            "bg-white",
-            data.stats.unmarkedCount > 0 ? "border-amber-300 bg-amber-50/30" : "border-emerald-200 bg-emerald-50/20"
-          )}
-        >
-          <CardHeader className="pb-1">
-            <span
-              className={cn(
-                "text-[11px] font-bold uppercase tracking-wider",
-                data.stats.unmarkedCount > 0 ? "text-amber-800" : "text-emerald-800"
-              )}
-            >
-              Unmarked Players
-            </span>
-          </CardHeader>
-          <CardContent>
-            <div
-              className={cn(
-                "text-2xl font-black",
-                data.stats.unmarkedCount > 0 ? "text-amber-700" : "text-emerald-700"
-              )}
-            >
-              {data.stats.unmarkedCount}
-            </div>
-            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
-              {data.stats.unmarkedCount === 0 ? "Ready to close" : "Needs explicit mark"}
-            </p>
-          </CardContent>
-        </Card>
+        <MetricCard
+          title="UNMARKED PLAYERS"
+          value={String(data.stats.unmarkedCount).padStart(2, "0")}
+          subtitle={data.stats.unmarkedCount === 0 ? "Ready to close" : "Needs explicit mark"}
+        />
       </div>
 
       {/* Progress & Bulk Operations Card */}
-      <Card variant="bordered" className="bg-white">
-        <CardContent className="p-4 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex-1 max-w-md space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-semibold">
-                <span className="text-[var(--color-text-primary)]">Roster Roll-Call Progress</span>
-                <span
-                  className={cn(
-                    "font-bold",
-                    data.stats.isComplete ? "text-emerald-700" : "text-amber-700"
-                  )}
-                >
-                  {data.stats.markedCount} / {data.stats.applicableCount} Marked ({completionPercent}%)
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className={cn(
-                    "h-2.5 rounded-full transition-all duration-300",
-                    data.stats.isComplete ? "bg-emerald-600" : "bg-amber-500"
-                  )}
-                  style={{ width: `${completionPercent}%` }}
-                />
-              </div>
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex-1 max-w-md space-y-1.5">
+            <div className="flex items-center justify-between text-xs font-barlow-condensed font-bold uppercase tracking-wider">
+              <span className="text-[#132B32]">Roster Roll-Call Progress</span>
+              <span
+                className={cn(
+                  "font-mono font-bold text-xs",
+                  data.stats.isComplete ? "text-[#1F5A38]" : "text-[#D95B24]"
+                )}
+              >
+                {data.stats.markedCount} / {data.stats.applicableCount} Marked ({completionPercent}%)
+              </span>
             </div>
-
-            {/* Bulk Controls */}
-            {!isClosed && (
-              <div className="flex items-center gap-2 pt-2 sm:pt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={bulkLoading || data.roster.length === 0}
-                  onClick={() => handleBulkMark("present")}
-                  className="text-xs h-8 text-emerald-700 hover:bg-emerald-50 border-emerald-200"
-                >
-                  Mark All Present
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={bulkLoading || data.roster.length === 0}
-                  onClick={() => handleBulkMark("absent")}
-                  className="text-xs h-8 text-rose-700 hover:bg-rose-50 border-rose-200"
-                >
-                  Mark All Absent
-                </Button>
-              </div>
-            )}
+            <div className="w-full bg-[#EAE0CF] rounded-full h-2 overflow-hidden">
+              <div
+                className={cn(
+                  "h-2 rounded-full transition-all duration-300",
+                  data.stats.isComplete ? "bg-[#1F5A38]" : "bg-[#D95B24]"
+                )}
+                style={{ width: `${completionPercent}%` }}
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Bulk Controls */}
+          {!isClosed && (
+            <div className="flex items-center gap-2 pt-2 sm:pt-0">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={bulkLoading || data.roster.length === 0}
+                onClick={() => handleBulkMark("present")}
+                className="font-barlow-condensed font-bold border-[#C2E4CD] text-[#1F5A38] bg-[#E5F4EB] hover:bg-[#D1EBD9] rounded-xl text-xs h-8 px-3 cursor-pointer"
+              >
+                Mark All Present
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={bulkLoading || data.roster.length === 0}
+                onClick={() => handleBulkMark("absent")}
+                className="font-barlow-condensed font-bold border-[#FECACA] text-[#991B1B] bg-[#FEE2E2] hover:bg-[#FDD2D2] rounded-xl text-xs h-8 px-3 cursor-pointer"
+              >
+                Mark All Absent
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Feedback Messages */}
       {errorMessage && (
-        <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium flex items-center justify-between shadow-xs">
           <span>{errorMessage}</span>
           <button
             type="button"
             onClick={() => setErrorMessage(null)}
-            className="text-red-600 hover:text-red-800 text-xs font-bold"
+            className="text-red-600 hover:text-red-800 text-xs font-bold font-barlow-condensed cursor-pointer"
           >
             Dismiss
           </button>
@@ -415,12 +362,12 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
       )}
 
       {successMessage && (
-        <div className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium flex items-center justify-between shadow-xs">
           <span>{successMessage}</span>
           <button
             type="button"
             onClick={() => setSuccessMessage(null)}
-            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold"
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-bold font-barlow-condensed cursor-pointer"
           >
             Dismiss
           </button>
@@ -428,19 +375,19 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
       )}
 
       {/* Player Table Card with Filter Tabs */}
-      <Card variant="bordered" className="bg-white overflow-hidden shadow-xs">
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl overflow-hidden shadow-xs">
         {/* Table Controls Bar */}
-        <div className="p-4 border-b border-[var(--color-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[var(--color-background-subtle)]/50">
+        <div className="p-4 border-b border-[#E2D7C3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#F5EBD8]">
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-[#FFF9EF] p-1 rounded-xl border border-[#DACBB4]">
             <button
               type="button"
               onClick={() => setFilterTab("all")}
               className={cn(
-                "px-3 py-1 rounded-md text-xs font-semibold transition-all",
+                "px-3 py-1 rounded-lg text-xs font-barlow-condensed font-bold tracking-wider uppercase transition-all cursor-pointer",
                 filterTab === "all"
-                  ? "bg-white text-[var(--color-text-primary)] shadow-xs"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#132B32] text-[#FFF9EF] shadow-xs"
+                  : "text-[#665C52] hover:text-[#132B32]"
               )}
             >
               All ({data.roster.length})
@@ -449,25 +396,25 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
               type="button"
               onClick={() => setFilterTab("unmarked")}
               className={cn(
-                "px-3 py-1 rounded-md text-xs font-semibold transition-all flex items-center gap-1",
+                "px-3 py-1 rounded-lg text-xs font-barlow-condensed font-bold tracking-wider uppercase transition-all flex items-center gap-1 cursor-pointer",
                 filterTab === "unmarked"
-                  ? "bg-white text-amber-800 shadow-xs"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#132B32] text-[#D5A64A] shadow-xs"
+                  : "text-[#665C52] hover:text-[#132B32]"
               )}
             >
               Unmarked ({data.stats.unmarkedCount})
               {data.stats.unmarkedCount > 0 && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D95B24]" />
               )}
             </button>
             <button
               type="button"
               onClick={() => setFilterTab("present")}
               className={cn(
-                "px-3 py-1 rounded-md text-xs font-semibold transition-all",
+                "px-3 py-1 rounded-lg text-xs font-barlow-condensed font-bold tracking-wider uppercase transition-all cursor-pointer",
                 filterTab === "present"
-                  ? "bg-white text-emerald-800 shadow-xs"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#1F382B] text-[#FFF9EF] shadow-xs"
+                  : "text-[#665C52] hover:text-[#132B32]"
               )}
             >
               Present ({data.stats.presentCount})
@@ -476,10 +423,10 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
               type="button"
               onClick={() => setFilterTab("absent")}
               className={cn(
-                "px-3 py-1 rounded-md text-xs font-semibold transition-all",
+                "px-3 py-1 rounded-lg text-xs font-barlow-condensed font-bold tracking-wider uppercase transition-all cursor-pointer",
                 filterTab === "absent"
-                  ? "bg-white text-rose-800 shadow-xs"
-                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  ? "bg-[#991B1B] text-[#FFF9EF] shadow-xs"
+                  : "text-[#665C52] hover:text-[#132B32]"
               )}
             >
               Absent ({data.stats.absentCount})
@@ -493,28 +440,28 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
               placeholder="Search player name or email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-8 px-3 text-xs bg-white border border-[var(--color-border)] rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+              className="w-full h-8 px-3 text-xs bg-[#FFF9EF] border border-[#DACBB4] rounded-xl focus:outline-none focus:border-[#D95B24] text-[#132B32]"
             />
           </div>
         </div>
 
         {/* Player Roster Table */}
         {filteredRoster.length === 0 ? (
-          <div className="py-12 text-center text-xs text-[var(--color-text-muted)]">
+          <div className="py-12 text-center text-xs text-[#7A6D5F]">
             No players found matching the current filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-[var(--color-border)] bg-[var(--color-background-subtle)] text-[var(--color-text-secondary)] font-bold uppercase tracking-wider">
+                <tr className="border-b border-[#E2D7C3] bg-[#F5EBD8] text-[#132B32] font-barlow-condensed font-bold uppercase tracking-wider text-xs sm:text-[13px]">
                   <th className="py-3 px-4">Player</th>
                   <th className="py-3 px-4">Email</th>
                   <th className="py-3 px-4 text-center">Current Status</th>
                   <th className="py-3 px-4 text-right">Attendance Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-border)] font-normal text-[var(--color-text-primary)]">
+              <tbody className="divide-y divide-[#EAE0CF]/60 font-normal text-[#132B32]">
                 {filteredRoster.map((player) => {
                   const isPresent = player.status === "present";
                   const isAbsent = player.status === "absent";
@@ -523,18 +470,18 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
                   return (
                     <tr
                       key={player.playerId}
-                      className="hover:bg-[var(--color-background-subtle)]/60 transition-colors"
+                      className="hover:bg-[#F5EBD8]/40 transition-colors"
                     >
                       {/* Player Name */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold text-xs flex items-center justify-center border border-emerald-200 shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-[#132B32] text-[#D5A64A] font-alfa text-xs flex items-center justify-center border border-[#D5A64A]/30 shrink-0">
                             {player.fullName.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <Link
                               href={`/dashboard/coach/players/${player.playerId}`}
-                              className="font-bold text-sm text-[var(--color-text-primary)] hover:text-[var(--color-primary)] transition-colors"
+                              className="font-bold text-sm text-[#132B32] hover:text-[#D95B24] transition-colors"
                             >
                               {player.fullName}
                             </Link>
@@ -543,7 +490,7 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
                       </td>
 
                       {/* Email */}
-                      <td className="py-3 px-4 text-[var(--color-text-secondary)]">
+                      <td className="py-3 px-4 text-[#665C52] font-mono">
                         {player.email}
                       </td>
 
@@ -567,21 +514,21 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
                       {/* Attendance Marking Controls */}
                       <td className="py-3 px-4 text-right">
                         {isClosed ? (
-                          <span className="text-xs font-semibold text-[var(--color-text-muted)]">
+                          <span className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#7A6D5F]">
                             Finalized
                           </span>
                         ) : (
-                          <div className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-slate-50 p-0.5">
+                          <div className="inline-flex items-center rounded-xl border border-[#DACBB4] bg-[#F5EBD8] p-0.5">
                             {/* Present Button */}
                             <button
                               type="button"
                               disabled={isSaving}
                               onClick={() => handleMarkPlayer(player.playerId, "present")}
                               className={cn(
-                                "px-3 py-1 text-xs font-bold rounded-md transition-all",
+                                "px-3 py-1 text-xs font-barlow-condensed font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
                                 isPresent
-                                  ? "bg-emerald-600 text-white shadow-xs"
-                                  : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                  ? "bg-[#1F382B] text-white shadow-xs"
+                                  : "text-[#132B32] hover:text-[#1F5A38] hover:bg-[#E5F4EB]"
                               )}
                             >
                               Present
@@ -593,10 +540,10 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
                               disabled={isSaving}
                               onClick={() => handleMarkPlayer(player.playerId, "absent")}
                               className={cn(
-                                "px-3 py-1 text-xs font-bold rounded-md transition-all",
+                                "px-3 py-1 text-xs font-barlow-condensed font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
                                 isAbsent
-                                  ? "bg-rose-600 text-white shadow-xs"
-                                  : "text-slate-600 hover:text-rose-700 hover:bg-rose-50"
+                                  ? "bg-[#991B1B] text-white shadow-xs"
+                                  : "text-[#132B32] hover:text-[#991B1B] hover:bg-[#FEE2E2]"
                               )}
                             >
                               Absent
@@ -611,7 +558,7 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
             </table>
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Confirmation Modal for Finalizing Session */}
       <Modal
@@ -622,32 +569,33 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
         maxWidth="md"
       >
         <div className="space-y-4">
-          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <div className="p-3 rounded-xl bg-[#FFF4DE] border border-[#FAD79A] text-[#9A6700] text-xs">
             <strong className="block font-bold">Important Notice:</strong>
             After closing, the backend strictly rejects any new marks, modifications, or deletions. Reopening through ordinary API calls is prohibited.
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="p-2.5 rounded-lg border border-[var(--color-border)] bg-slate-50">
-              <span className="text-[10px] text-[var(--color-text-muted)] uppercase font-bold">Total</span>
-              <p className="text-lg font-black text-[var(--color-text-primary)]">{data.stats.applicableCount}</p>
+            <div className="p-2.5 rounded-xl border border-[#E2D7C3] bg-[#F5EBD8]">
+              <span className="text-[10px] text-[#665C52] uppercase font-barlow-condensed font-bold">Total</span>
+              <p className="text-xl font-alfa text-[#132B32]">{data.stats.applicableCount}</p>
             </div>
-            <div className="p-2.5 rounded-lg border border-emerald-200 bg-emerald-50">
-              <span className="text-[10px] text-emerald-800 uppercase font-bold">Present</span>
-              <p className="text-lg font-black text-emerald-700">{data.stats.presentCount}</p>
+            <div className="p-2.5 rounded-xl border border-[#C2E4CD] bg-[#E5F4EB]">
+              <span className="text-[10px] text-[#1F5A38] uppercase font-barlow-condensed font-bold">Present</span>
+              <p className="text-xl font-alfa text-[#1F5A38]">{data.stats.presentCount}</p>
             </div>
-            <div className="p-2.5 rounded-lg border border-rose-200 bg-rose-50">
-              <span className="text-[10px] text-rose-800 uppercase font-bold">Absent</span>
-              <p className="text-lg font-black text-rose-700">{data.stats.absentCount}</p>
+            <div className="p-2.5 rounded-xl border border-[#FECACA] bg-[#FEE2E2]">
+              <span className="text-[10px] text-[#991B1B] uppercase font-barlow-condensed font-bold">Absent</span>
+              <p className="text-xl font-alfa text-[#991B1B]">{data.stats.absentCount}</p>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#E2D7C3]">
             <Button
               variant="outline"
               size="sm"
               disabled={closing}
               onClick={() => setIsCloseModalOpen(false)}
+              className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl"
             >
               Cancel
             </Button>
@@ -656,6 +604,7 @@ export function AttendanceSheetView({ initialData }: AttendanceSheetViewProps) {
               size="sm"
               isLoading={closing}
               onClick={handleCloseSession}
+              className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl"
             >
               Confirm &amp; Finalize Session
             </Button>

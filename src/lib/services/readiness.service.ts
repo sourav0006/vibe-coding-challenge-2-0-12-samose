@@ -300,7 +300,7 @@ export class ReadinessService {
 
       // Attendance computation
       const applicableSessions = closedSessions.filter((session) =>
-        AttendanceService.isPlayerEligibleForSession(player, session.sportId._id, session.sessionDate)
+        AttendanceService.isPlayerEligibleForSession(player, session.sportId._id, session.sessionDate, session)
       );
 
       const playerAttendanceMap = attendanceByPlayer.get(pId);

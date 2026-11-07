@@ -1,6 +1,6 @@
 "use client";
 
-import React, { forwardRef, useId, type SelectHTMLAttributes } from "react";
+import { forwardRef, useId, type SelectHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon } from "./icons";
 

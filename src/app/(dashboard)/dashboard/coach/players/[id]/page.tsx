@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
@@ -15,14 +16,15 @@ import {
 } from "@/lib/services";
 import { PlayerProfileView } from "@/features/coach/player-profile-view";
 import { objectIdSchema } from "@/lib/validation";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function CoachPlayerDetailPage({
-  params,
-}: {
+interface CoachPlayerDetailPageProps {
   params: Promise<{ id: string }>;
-}) {
+}
+
+async function CoachPlayerDetailContent({
+  params,
+}: CoachPlayerDetailPageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -85,5 +87,13 @@ export default async function CoachPlayerDetailPage({
         initialRemarks={initialRemarks}
       />
     </AppShell>
+  );
+}
+
+export default function CoachPlayerDetailPage(props: CoachPlayerDetailPageProps) {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <CoachPlayerDetailContent {...props} />
+    </Suspense>
   );
 }

@@ -1,40 +1,57 @@
-import React from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface LogoProps {
   className?: string;
-  showTagline?: boolean;
+  variant?: "dark" | "white";
+  size?: "sm" | "md" | "lg";
+  showTagline?: boolean; // Kept for backwards compatibility
+  showWordmark?: boolean;
 }
 
-export function Logo({ className, showTagline = false }: LogoProps) {
+export function Logo({
+  className,
+  variant = "dark",
+  size = "md",
+  showWordmark = true,
+}: LogoProps) {
+  const isWhite = variant === "white";
+  const logoSrc = isWhite ? "/images/logo-white.png" : "/images/logo-dark.png";
+
+  const sizeConfig = {
+    sm: { img: 24, text: "text-xs tracking-[0.2em]" },
+    md: { img: 28, text: "text-sm tracking-[0.22em]" },
+    lg: { img: 36, text: "text-base tracking-[0.24em]" },
+  };
+
+  const { img, text } = sizeConfig[size];
+
   return (
     <div className={cn("inline-flex items-center gap-2.5 select-none", className)}>
-      <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] text-white flex items-center justify-center font-bold text-base shadow-sm">
-        <svg
-          className="w-5 h-5 text-white"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <div
+        className="relative shrink-0 flex items-center justify-center"
+        style={{ width: img, height: img }}
+      >
+        <Image
+          src={logoSrc}
+          alt="One Academy"
+          width={img}
+          height={img}
+          className="w-full h-full object-contain"
+          priority
+        />
+      </div>
+      {showWordmark && (
+        <span
+          className={cn(
+            "font-bold uppercase whitespace-nowrap leading-none transition-colors",
+            text,
+            isWhite ? "text-white" : "text-slate-900"
+          )}
         >
-          {/* Sports academy crest / shield icon */}
-          <path d="M12 2L3 7v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" />
-          <path d="M12 8v8" />
-          <path d="M8 12h8" />
-        </svg>
-      </div>
-      <div className="flex flex-col">
-        <span className="font-bold tracking-tight text-base text-[var(--color-text-primary)] leading-tight">
-          One<span className="text-[var(--color-primary)]">Academy</span>
+          ONE ACADEMY
         </span>
-        {showTagline && (
-          <span className="text-[10px] uppercase tracking-wider text-[var(--color-text-secondary)] font-medium">
-            Sports Management
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,439 @@
+.ims-shell {
+  --ink: #11262C;
+  --muted: #6F716B;
+  --line: #E2D7C3;
+  --surface: #FFF9EF;
+  --accent: #11262C;
+  --accent-2: #1B3B44;
+  --accent-gold: #C58A2B;
+  --accent-orange: #D95B24;
+  --accent-glow: rgba(217, 91, 36, 0.25);
+  --accent-light: #FAF5EC;
+  color-scheme: light;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(360px, 0.92fr);
+  align-items: center;
+  gap: clamp(28px, 4.5vw, 68px);
+  min-height: 640px;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  overflow: visible;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ims-shell *,
+.ims-shell *::before,
+.ims-shell *::after {
+  box-sizing: border-box;
+}
+
+.ims-shell :is(button, input):focus-visible {
+  outline: 3px solid rgba(217, 91, 36, 0.4);
+  outline-offset: 3px;
+}
+
+/* Mascot Stage */
+.ims-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 500px;
+  display: grid;
+  place-items: center;
+}
+
+.ims-fox {
+  position: relative;
+  width: 100%;
+  height: min(560px, 66vh);
+  min-height: 360px;
+}
+
+.ims-fox-canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 360ms ease;
+}
+
+.ims-fox-canvas.is-ready {
+  opacity: 1;
+}
+
+.ims-fox-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ims-fox-ground {
+  position: absolute;
+  width: 48%;
+  height: 6%;
+  left: 26%;
+  bottom: 5%;
+  border-radius: 50%;
+  background: rgba(64, 39, 25, 0.26);
+  filter: blur(14px);
+}
+
+.ims-fox-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 360ms ease;
+}
+
+.ims-fox-poster.is-visible {
+  opacity: 1;
+}
+
+/* Auth Card - Double Gold Border Vintage Sports Club Styling */
+.ims-card {
+  width: min(100%, 500px);
+  justify-self: center;
+  padding: clamp(28px, 3.6vw, 44px);
+  border: 2px solid #C58A2B;
+  box-shadow: 0 0 0 4px #FFF9EF, 0 0 0 5.5px #C58A2B, 0 20px 48px rgba(17, 38, 44, 0.14);
+  border-radius: 30px;
+  background: #FFF9EF;
+}
+
+.ims-card h1 {
+  margin: 0 0 24px;
+  font-family: var(--font-alfa, "Alfa Slab One", serif);
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #11262C;
+}
+
+.ims-card p {
+  margin: 0;
+}
+
+.ims-form {
+  display: grid;
+  gap: 18px;
+}
+
+.ims-field label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: #11262C;
+  font-family: var(--font-barlow-condensed, "Barlow Condensed", sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ims-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ims-input-wrap > svg {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: #11262C;
+  pointer-events: none;
+  stroke-width: 2;
+}
+
+.ims-input-wrap input {
+  appearance: none;
+  width: 100%;
+  height: 50px;
+  border: 1px solid #D5A64A;
+  border-radius: 12px;
+  background: #FFFDF8;
+  color: #11262C;
+  padding: 0 16px 0 44px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.ims-input-wrap input::placeholder {
+  color: #718E94;
+  font-size: 14px;
+}
+
+.ims-input-wrap input:focus {
+  outline: none;
+  border-color: #D95B24;
+  box-shadow: 0 0 0 3px rgba(217, 91, 36, 0.22);
+}
+
+.ims-input-wrap input[type="password"],
+.ims-input-wrap input[name="password"] {
+  padding-right: 48px;
+}
+
+.ims-reveal {
+  position: absolute;
+  right: 6px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #11262C;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.ims-reveal:hover {
+  background: #FAF5EC;
+  color: #D95B24;
+}
+
+.ims-reveal svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+}
+
+/* Submit Button - Vintage Deep Teal with Double Gold Border Accent */
+.ims-submit {
+  min-height: 52px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 2px solid #C58A2B;
+  border-radius: 12px;
+  background: #11262C;
+  color: #FFF9EF;
+  font-family: var(--font-alfa, "Alfa Slab One", serif);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 18px rgba(17, 38, 44, 0.22);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.ims-submit:hover:not(:disabled) {
+  background: #1B3B44;
+  border-color: #D5A64A;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(17, 38, 44, 0.3);
+}
+
+.ims-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ims-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.ims-submit svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Segmented 8-character code grid for activation */
+.ims-code-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.ims-code-digit {
+  width: 100%;
+  height: 50px;
+  padding: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  font-family: var(--font-alfa, "Alfa Slab One", monospace);
+  text-transform: uppercase;
+  color: #11262C;
+  background: #FFFDF8;
+  border: 1.5px solid #D5A64A;
+  border-radius: 10px;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.ims-code-digit:focus {
+  outline: none;
+  border-color: #D95B24;
+  box-shadow: 0 0 0 3px rgba(217, 91, 36, 0.25);
+  transform: translateY(-1px);
+}
+
+.ims-code-digit.is-filled {
+  border-color: #C58A2B;
+  background: #FFF9EF;
+}
+
+.ims-hint {
+  margin-top: 6px !important;
+  color: #5D6B6E;
+  font-family: var(--font-barlow-condensed, "Barlow Condensed", sans-serif);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ims-error {
+  border: 1px solid #FED7AA;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #FFF7ED;
+  color: #C2410C;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 600;
+}
+
+.ims-success {
+  display: grid;
+  gap: 16px;
+  text-align: center;
+  padding: 12px 0;
+}
+
+.ims-success-mark {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  border-radius: 20px;
+  background: #E2F2E7;
+  border: 2px solid #2E543E;
+  color: #1F382B;
+  font-size: 28px;
+  box-shadow: 0 8px 20px rgba(31, 56, 43, 0.15);
+}
+
+.ims-success-mark svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 2.5;
+}
+
+.ims-success p {
+  color: #5D6B6E;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Role Selector Tabs - Vintage Sports Segmented Control */
+.ims-role-selector {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  background: #F5EBD8;
+  border: 1px solid #E2D7C3;
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+
+.ims-role-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #11262C;
+  font-family: var(--font-barlow-condensed, "Barlow Condensed", sans-serif);
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.ims-role-btn:hover:not(.is-active) {
+  color: #D95B24;
+  background: rgba(255, 253, 248, 0.7);
+}
+
+.ims-role-btn.is-active {
+  background: #11262C;
+  color: #FFF9EF;
+  box-shadow: 0 2px 6px rgba(17, 38, 44, 0.25);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+  .ims-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    min-height: auto;
+  }
+  .ims-stage {
+    min-height: 340px;
+  }
+  .ims-fox {
+    height: 360px;
+    min-height: 300px;
+  }
+  .ims-card {
+    width: 100%;
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ims-stage {
+    min-height: 260px;
+  }
+  .ims-fox {
+    height: 280px;
+    min-height: 240px;
+  }
+  .ims-card {
+    padding: 24px 18px 26px;
+    border-radius: 24px;
+    box-shadow: 0 0 0 3px #FFF9EF, 0 0 0 4.5px #C58A2B, 0 16px 36px rgba(17, 38, 44, 0.12);
+  }
+  .ims-card h1 {
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+  .ims-form {
+    gap: 16px;
+  }
+  .ims-code-digit {
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ims-shell * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -20,9 +19,10 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
   // Filter to active sports only
   const activeSports = sportsList.filter((s) => s.isActive !== false);
 
+  const [title, setTitle] = useState("");
+  const [opponentName, setOpponentName] = useState("");
   const [sportId, setSportId] = useState(activeSports[0]?.id || "");
   const [matchDate, setMatchDate] = useState(getTodayDateString());
-  const [opponentName, setOpponentName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,13 +30,13 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
     e.preventDefault();
     setError(null);
 
-    if (!sportId) {
-      setError("Please select an active sport for this match.");
+    if (!title.trim() || title.trim().length < 2) {
+      setError("Match title is required and must be at least 2 characters long.");
       return;
     }
 
-    if (!matchDate || !/^\d{4}-\d{2}-\d{2}$/.test(matchDate)) {
-      setError("Please select a valid match date (YYYY-MM-DD).");
+    if (title.trim().length > 100) {
+      setError("Match title cannot exceed 100 characters.");
       return;
     }
 
@@ -50,6 +50,16 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
       return;
     }
 
+    if (!sportId) {
+      setError("Please select an active sport for this match.");
+      return;
+    }
+
+    if (!matchDate || !/^\d{4}-\d{2}-\d{2}$/.test(matchDate)) {
+      setError("Please select a valid match date (YYYY-MM-DD).");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -57,9 +67,10 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          title: title.trim(),
+          opponentName: opponentName.trim(),
           sportId,
           matchDate,
-          opponentName: opponentName.trim(),
         }),
       });
 
@@ -84,7 +95,7 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
       <div className="flex items-center justify-between">
         <Link
           href="/dashboard/coach/matches"
-          className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1.5"
+          className="text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#7A6D5F] hover:text-[#D95B24] transition-colors inline-flex items-center gap-1.5"
         >
           <svg
             className="w-4 h-4"
@@ -99,33 +110,91 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
         </Link>
       </div>
 
-      <Card className="border border-slate-200 shadow-sm bg-white">
-        <CardHeader className="border-b border-slate-100 pb-5">
-          <CardTitle className="text-xl font-bold text-slate-900">
-            Schedule New Match Fixture
-          </CardTitle>
-          <CardDescription className="text-sm text-slate-500">
-            Create an official fixture. You will be able to select participating players from the eligible roster and record their individual performance scores.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
+      <div className="space-y-1.5">
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-barlow-condensed font-bold tracking-wider uppercase bg-[#1F382B] text-[#FFF9EF] border border-[#2E543E]">
+          COMPETITION FIXTURE SCHEDULING
+        </span>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-alfa text-[#132B32] uppercase tracking-tight leading-tight mt-1">
+          Schedule Match Fixture
+        </h1>
+        <p className="text-xs sm:text-sm text-[#665C52]">
+          Schedule a match, select eligible players, and record individual scores.
+        </p>
+      </div>
+
+      <div className="bg-[#FFFDF8] border border-[#E2D7C3] rounded-2xl shadow-xs overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-[#E2D7C3] bg-[#F5EBD8]">
+          <h2 className="text-lg font-alfa text-[#132B32] uppercase tracking-wide">
+            Fixture Details &amp; Opponent
+          </h2>
+          <p className="text-xs text-[#665C52] mt-0.5">
+            Designate the title, opponent academy, discipline, and fixture date.
+          </p>
+        </div>
+        <div className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-4 rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
                 {error}
               </div>
             )}
 
-            {/* Sport Select */}
+            {/* Field 1: Match Title */}
+            <div>
+              <label
+                htmlFor="match-title"
+                className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1"
+              >
+                Match Title <span className="text-[#D95B24]">*</span>
+              </label>
+              <Input
+                id="match-title"
+                type="text"
+                placeholder="e.g. Test Match 1, Dumka Series M1, Inter Academy Final"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
+                maxLength={100}
+                required
+              />
+              <p className="mt-1 text-xs text-[#7A6D5F]">
+                Between 2 and 100 characters. Multiple fixtures against the same opponent on the same day are supported with unique titles.
+              </p>
+            </div>
+
+            {/* Field 2: Opponent Club / Academy */}
+            <div>
+              <label
+                htmlFor="match-opponent"
+                className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1"
+              >
+                Opponent Club / Academy <span className="text-[#D95B24]">*</span>
+              </label>
+              <Input
+                id="match-opponent"
+                type="text"
+                placeholder="e.g. Dumka Academy, Manchester City Youth Academy"
+                value={opponentName}
+                onChange={(e) => setOpponentName(e.target.value)}
+                className="w-full bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
+                maxLength={100}
+                required
+              />
+              <p className="mt-1 text-xs text-[#7A6D5F]">
+                Between 2 and 100 characters. Name of the visiting or hosting opponent academy.
+              </p>
+            </div>
+
+            {/* Field 3: Sport */}
             <div>
               <label
                 htmlFor="match-sport"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1"
               >
-                Sport <span className="text-rose-500">*</span>
+                Sport <span className="text-[#D95B24]">*</span>
               </label>
               {activeSports.length === 0 ? (
-                <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded text-sm">
+                <div className="p-3 bg-[#FFF4DE] border border-[#FAD79A] text-[#9A6700] rounded-xl text-xs">
                   No active sports available. Please activate or create a sport first.
                 </div>
               ) : (
@@ -133,7 +202,7 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
                   id="match-sport"
                   value={sportId}
                   onChange={(e) => setSportId(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
                   required
                 >
                   {activeSports.map((sport) => (
@@ -143,81 +212,55 @@ export function CreateMatchForm({ sportsList }: CreateMatchFormProps) {
                   ))}
                 </Select>
               )}
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[#7A6D5F]">
                 Only active sports can host official match fixtures.
               </p>
             </div>
 
-            {/* Match Date */}
+            {/* Field 4: Match Date */}
             <div>
               <label
                 htmlFor="match-date"
-                className="block text-sm font-medium text-slate-700 mb-1"
+                className="block text-xs font-barlow-condensed font-bold uppercase tracking-wider text-[#132B32] mb-1"
               >
-                Match Date <span className="text-rose-500">*</span>
+                Match Date <span className="text-[#D95B24]">*</span>
               </label>
               <Input
                 id="match-date"
                 type="date"
                 value={matchDate}
                 onChange={(e) => setMatchDate(e.target.value)}
-                className="w-full"
+                className="w-full bg-[#FFF9EF] border-[#DACBB4] rounded-xl text-[#132B32]"
                 required
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[#7A6D5F] font-mono">
                 Player eligibility and same-day attendance restrictions will be computed based on this calendar date.
               </p>
             </div>
 
-            {/* Opponent Name */}
-            <div>
-              <label
-                htmlFor="match-opponent"
-                className="block text-sm font-medium text-slate-700 mb-1"
-              >
-                Opponent Club / Academy <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                id="match-opponent"
-                type="text"
-                placeholder="e.g. Manchester City Youth Academy"
-                value={opponentName}
-                onChange={(e) => setOpponentName(e.target.value)}
-                className="w-full"
-                maxLength={100}
-                required
-              />
-              <p className="mt-1 text-xs text-slate-500">
-                Between 2 and 100 characters. Duplicate matches for the same sport, date, and opponent will be rejected.
-              </p>
-            </div>
-
-            {/* Invariant Note */}
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 space-y-1">
-              <span className="font-semibold text-slate-800">Match Lifecycle Guarantee:</span>
-              <p>
-                Matches start in <strong>Draft</strong> status. You can add or remove participating players and adjust individual scores. Once <strong>Finalized</strong>, match details and player scores are permanently locked and immutable.
-              </p>
-            </div>
 
             {/* Form actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#E2D7C3]">
               <Link href="/dashboard/coach/matches">
-                <Button type="button" variant="outline">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="font-barlow-condensed font-bold border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl text-xs"
+                >
                   Cancel
                 </Button>
               </Link>
               <Button
                 type="submit"
                 disabled={loading || activeSports.length === 0}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white min-w-[120px]"
+                className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold rounded-xl text-xs min-w-[140px]"
               >
                 {loading ? "Creating..." : "Create & Open Sheet"}
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { loginSchema } from "@/lib/validation";
-import { AuthService } from "@/lib/services";
+import { AuthService, RoleMismatchError } from "@/lib/services";
 import { createSessionToken, setSessionCookie, loginRateLimiter } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  let rateLimitKey = "";
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
     const body = await request.json().catch(() => null);
@@ -21,10 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password, requestedRole } = parseResult.data;
-    const rateLimitKey = `login:${ip}:${email}`;
+    const normalizedEmail = email.trim().toLowerCase();
+    rateLimitKey = `login:${ip}:${normalizedEmail}`;
 
-    // Rate limiting check
-    const rateLimit = loginRateLimiter.check(rateLimitKey);
+    // Rate limiting check (asynchronous with MongoDB fallback)
+    const rateLimit = await loginRateLimiter.checkAsync(rateLimitKey);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
@@ -36,10 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticate credentials
-    const user = await AuthService.authenticate({ email, password, requestedRole });
+    const user = await AuthService.authenticate({ email: normalizedEmail, password, requestedRole });
 
     // Clear rate limit on successful authentication
-    loginRateLimiter.reset(rateLimitKey);
+    await loginRateLimiter.resetAsync(rateLimitKey);
 
     // Create JWT and set HTTP-only cookie
     const token = await createSessionToken({
@@ -62,6 +64,22 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof RoleMismatchError) {
+      // Refund the rate-limit penalty so selecting the wrong role does not consume password attempts
+      if (rateLimitKey) {
+        await loginRateLimiter.refundAsync(rateLimitKey);
+      }
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+          roleMismatch: true,
+          expectedRole: error.actualRole,
+        },
+        { status: 403 }
+      );
+    }
+
     const message = error instanceof Error ? error.message : "Authentication failed";
     return NextResponse.json(
       {
@@ -72,3 +90,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

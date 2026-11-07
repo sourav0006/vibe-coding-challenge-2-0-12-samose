@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { MatchService } from "@/lib/services";
 import {
@@ -89,6 +90,7 @@ export async function POST(
         );
       }
       const result = await MatchService.saveParticipantsBatch(id, parsedBatch.data.participants);
+      try { revalidatePath(`/dashboard/coach/matches/${id}`); } catch {}
       return NextResponse.json(
         {
           success: true,
@@ -116,6 +118,8 @@ export async function POST(
       parsedSingle.data.playerId,
       parsedSingle.data.score
     );
+
+    try { revalidatePath(`/dashboard/coach/matches/${id}`); } catch {}
 
     return NextResponse.json(
       {
@@ -172,6 +176,8 @@ export async function PUT(
     }
 
     const result = await MatchService.saveParticipantsBatch(id, parsed.data.participants);
+
+    try { revalidatePath(`/dashboard/coach/matches/${id}`); } catch {}
 
     return NextResponse.json(
       {
@@ -241,6 +247,8 @@ export async function DELETE(
     }
 
     await MatchService.removeParticipant(id, playerId);
+
+    try { revalidatePath(`/dashboard/coach/matches/${id}`); } catch {}
 
     return NextResponse.json(
       {

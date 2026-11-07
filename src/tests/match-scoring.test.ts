@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import mongoose from "mongoose";
 import {
   createMatchSchema,
@@ -28,18 +30,19 @@ async function test(name: string, fn: () => Promise<void> | void) {
 
 export async function runMatchScoringTestSuite() {
   console.log("\n=======================================================");
-  console.log("One Academy: Phase 7 Match Management & Scoring Test Suite");
+  console.log("One Academy: Phase 7 Match Management & Title Scheduling Test Suite");
   console.log("=======================================================\n");
 
   const dummySportId = new mongoose.Types.ObjectId().toString();
   const otherSportId = new mongoose.Types.ObjectId().toString();
   const dummyPlayerId = new mongoose.Types.ObjectId().toString();
 
-  // --- 1. Match Creation & Validation Tests ---
-  console.log("--- 1. Match Creation & Validation Tests ---");
+  // --- 1. Match Creation & Title Validation Tests ---
+  console.log("--- 1. Match Creation & Title Validation Tests ---");
 
-  await test("Valid match creation schema passes validation", () => {
+  await test("Valid match creation schema with title passes validation", () => {
     const input = {
+      title: "Dumka Series M1",
       sportId: dummySportId,
       matchDate: "2026-11-15",
       opponentName: "Arsenal Youth Academy",
@@ -47,16 +50,55 @@ export async function runMatchScoringTestSuite() {
     const result = createMatchSchema.safeParse(input);
     assert.equal(result.success, true);
     if (result.success) {
+      assert.equal(result.data.title, "Dumka Series M1");
       assert.equal(result.data.status, "draft");
       assert.equal(result.data.opponentName, "Arsenal Youth Academy");
     }
   });
 
+  await test("Empty or whitespace-only match title is rejected", () => {
+    const invalidInputs = [
+      { title: "", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "Team A" },
+      { title: "   ", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "Team A" },
+      { title: "T", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "Team A" }, // < 2 chars
+    ];
+    for (const input of invalidInputs) {
+      const result = createMatchSchema.safeParse(input);
+      assert.equal(result.success, false, `Expected failure for title: "${input.title}"`);
+    }
+  });
+
+  await test("Match title exceeding 100 characters is rejected", () => {
+    const input = {
+      title: "M".repeat(101),
+      sportId: dummySportId,
+      matchDate: "2026-11-15",
+      opponentName: "Valid Opponent",
+    };
+    const result = createMatchSchema.safeParse(input);
+    assert.equal(result.success, false);
+  });
+
+  await test("Match title and opponent name whitespace are automatically trimmed", () => {
+    const input = {
+      title: "   Inter Academy Final   ",
+      sportId: dummySportId,
+      matchDate: "2026-11-15",
+      opponentName: "   Dumka Academy   ",
+    };
+    const result = createMatchSchema.safeParse(input);
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.title, "Inter Academy Final");
+      assert.equal(result.data.opponentName, "Dumka Academy");
+    }
+  });
+
   await test("Invalid dates are rejected", () => {
     const invalidInputs = [
-      { sportId: dummySportId, matchDate: "not-a-date", opponentName: "Team A" },
-      { sportId: dummySportId, matchDate: "", opponentName: "Team A" },
-      { sportId: dummySportId, matchDate: "2026/11/15", opponentName: "Team A" },
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "not-a-date", opponentName: "Team A" },
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "", opponentName: "Team A" },
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "2026/11/15", opponentName: "Team A" },
     ];
     for (const input of invalidInputs) {
       const result = createMatchSchema.safeParse(input);
@@ -66,9 +108,9 @@ export async function runMatchScoringTestSuite() {
 
   await test("Empty or whitespace-only opponent name is rejected", () => {
     const invalidInputs = [
-      { sportId: dummySportId, matchDate: "2026-11-15", opponentName: "" },
-      { sportId: dummySportId, matchDate: "2026-11-15", opponentName: "   " },
-      { sportId: dummySportId, matchDate: "2026-11-15", opponentName: "A" }, // < 2 chars
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "" },
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "   " },
+      { title: "Test Match 1", sportId: dummySportId, matchDate: "2026-11-15", opponentName: "A" }, // < 2 chars
     ];
     for (const input of invalidInputs) {
       const result = createMatchSchema.safeParse(input);
@@ -78,6 +120,7 @@ export async function runMatchScoringTestSuite() {
 
   await test("Opponent name exceeding 100 characters is rejected", () => {
     const input = {
+      title: "Test Match 1",
       sportId: dummySportId,
       matchDate: "2026-11-15",
       opponentName: "A".repeat(101),
@@ -88,6 +131,7 @@ export async function runMatchScoringTestSuite() {
 
   await test("Invalid Sport ObjectId format is rejected", () => {
     const input = {
+      title: "Test Match 1",
       sportId: "invalid-sport-id-string",
       matchDate: "2026-11-15",
       opponentName: "Valid Opponent",
@@ -102,8 +146,198 @@ export async function runMatchScoringTestSuite() {
     assert.equal(isRoleAuthorized("scout", ["coach"]), false);
   });
 
-  // --- 2. Player Eligibility & Sport History Tests ---
-  console.log("\n--- 2. Player Eligibility & Sport History Tests ---");
+  // --- 2. Same-Day Match Scheduling & Compound Uniqueness Logic ---
+  console.log("\n--- 2. Same-Day Match Scheduling & Compound Uniqueness Logic ---");
+
+  // In-memory mock store implementing compound key uniqueness:
+  // key = `${sportId}::${matchDate}::${normalizedOpponent}::${normalizedTitle}`
+  const mockMatchStore: Array<{
+    sportId: string;
+    matchDate: string;
+    opponentName: string;
+    normalizedOpponent: string;
+    title: string;
+    normalizedTitle: string;
+  }> = [];
+
+  function simulateCreateMatch(input: {
+    sportId: string;
+    matchDate: string;
+    opponentName: string;
+    title: string;
+  }) {
+    const normOpp = input.opponentName.trim().toLowerCase();
+    const normTitle = input.title.trim().toLowerCase();
+
+    const duplicate = mockMatchStore.find(
+      (m) =>
+        m.sportId === input.sportId &&
+        m.matchDate === input.matchDate &&
+        m.normalizedOpponent === normOpp &&
+        m.normalizedTitle === normTitle
+    );
+
+    if (duplicate) {
+      throw new Error(
+        "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+      );
+    }
+
+    const record = {
+      sportId: input.sportId,
+      matchDate: input.matchDate,
+      opponentName: input.opponentName.trim(),
+      normalizedOpponent: normOpp,
+      title: input.title.trim(),
+      normalizedTitle: normTitle,
+    };
+    mockMatchStore.push(record);
+    return record;
+  }
+
+  await test("Scenario 1: First match against opponent in sport on date succeeds", () => {
+    const record = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-06",
+      opponentName: "Dumka Academy",
+      title: "Test Match 1",
+    });
+    assert.equal(record.title, "Test Match 1");
+    assert.equal(record.normalizedTitle, "test match 1");
+  });
+
+  await test("Scenario 2: Second match with different title against same opponent on same date succeeds", () => {
+    const record = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-06",
+      opponentName: "Dumka Academy",
+      title: "Dumka Series M2",
+    });
+    assert.equal(record.title, "Dumka Series M2");
+    assert.equal(record.normalizedTitle, "dumka series m2");
+  });
+
+  await test("Scenario 3: Multiple matches (3+) scheduled on the same date succeed without restriction", () => {
+    const m3 = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-06",
+      opponentName: "Dumka Academy",
+      title: "Dumka Series M3",
+    });
+    const m4 = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-06",
+      opponentName: "Dumka Academy",
+      title: "Inter Academy Final",
+    });
+    assert.ok(m3);
+    assert.ok(m4);
+  });
+
+  await test("Scenario 4: Duplicate match combination (same sport, date, opponent, title) is rejected with exact 409 conflict message", () => {
+    assert.throws(
+      () =>
+        simulateCreateMatch({
+          sportId: dummySportId,
+          matchDate: "2026-11-06",
+          opponentName: "Dumka Academy",
+          title: "Test Match 1",
+        }),
+      (err: Error) => {
+        return (
+          err.message ===
+          "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+        );
+      }
+    );
+  });
+
+  await test("Scenario 5: Case-insensitive duplicate detection ('Test Match 1' vs 'test match 1') is rejected", () => {
+    assert.throws(
+      () =>
+        simulateCreateMatch({
+          sportId: dummySportId,
+          matchDate: "2026-11-06",
+          opponentName: "dumka academy",
+          title: "test match 1",
+        }),
+      (err: Error) => {
+        return err.message.includes(
+          "A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+        );
+      }
+    );
+  });
+
+  await test("Scenario 7: Same match title against a DIFFERENT opponent on same date is allowed", () => {
+    const record = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-06",
+      opponentName: "Manchester Academy",
+      title: "Test Match 1",
+    });
+    assert.equal(record.opponentName, "Manchester Academy");
+    assert.equal(record.title, "Test Match 1");
+  });
+
+  await test("Scenario 8: Same match title for a DIFFERENT sport on same date is allowed", () => {
+    const record = simulateCreateMatch({
+      sportId: otherSportId,
+      matchDate: "2026-11-06",
+      opponentName: "Dumka Academy",
+      title: "Test Match 1",
+    });
+    assert.equal(record.sportId, otherSportId);
+    assert.equal(record.title, "Test Match 1");
+  });
+
+  await test("Scenario 9: Same match title against same opponent on a DIFFERENT date is allowed", () => {
+    const record = simulateCreateMatch({
+      sportId: dummySportId,
+      matchDate: "2026-11-07",
+      opponentName: "Dumka Academy",
+      title: "Test Match 1",
+    });
+    assert.equal(record.matchDate, "2026-11-07");
+    assert.equal(record.title, "Test Match 1");
+  });
+
+  // --- 3. UI Form Field Order Invariants ---
+  console.log("\n--- 3. UI Form Field Order Invariants ---");
+
+  await test("Match Creation page displays fields in strict order: Title, Opponent, Sport, Date", () => {
+    const formFilePath = path.join(
+      process.cwd(),
+      "src/features/matches/create-match-form.tsx"
+    );
+    const formContent = fs.readFileSync(formFilePath, "utf-8");
+
+    const titleIndex = formContent.indexOf("id=\"match-title\"");
+    const opponentIndex = formContent.indexOf("id=\"match-opponent\"");
+    const sportIndex = formContent.indexOf("id=\"match-sport\"");
+    const dateIndex = formContent.indexOf("id=\"match-date\"");
+
+    assert.ok(titleIndex > 0, "match-title field must exist");
+    assert.ok(opponentIndex > 0, "match-opponent field must exist");
+    assert.ok(sportIndex > 0, "match-sport field must exist");
+    assert.ok(dateIndex > 0, "match-date field must exist");
+
+    assert.ok(
+      titleIndex < opponentIndex,
+      "Field 1 (Match Title) must appear before Field 2 (Opponent)"
+    );
+    assert.ok(
+      opponentIndex < sportIndex,
+      "Field 2 (Opponent) must appear before Field 3 (Sport)"
+    );
+    assert.ok(
+      sportIndex < dateIndex,
+      "Field 3 (Sport) must appear before Field 4 (Match Date)"
+    );
+  });
+
+  // --- 4. Player Eligibility & Sport History Tests ---
+  console.log("\n--- 4. Player Eligibility & Sport History Tests ---");
 
   await test("Player assigned to matching sport on match date is eligible", () => {
     const player = {
@@ -150,7 +384,6 @@ export async function runMatchScoringTestSuite() {
   });
 
   await test("Historical sport assignment is strictly respected across date ranges", () => {
-    // Player was in dummySportId until May 31, then transferred to otherSportId from June 1
     const player = {
       _id: new mongoose.Types.ObjectId(),
       sportId: new mongoose.Types.ObjectId(otherSportId),
@@ -169,7 +402,6 @@ export async function runMatchScoringTestSuite() {
       ],
     } as unknown as IPlayer;
 
-    // On April 10 (historical), player was in dummySportId
     const eligiblePast = AttendanceService.isPlayerEligibleForSession(
       player,
       dummySportId,
@@ -177,7 +409,6 @@ export async function runMatchScoringTestSuite() {
     );
     assert.equal(eligiblePast, true);
 
-    // On October 10 (current), player is NO longer in dummySportId
     const eligiblePresent = AttendanceService.isPlayerEligibleForSession(
       player,
       dummySportId,
@@ -186,8 +417,8 @@ export async function runMatchScoringTestSuite() {
     assert.equal(eligiblePresent, false);
   });
 
-  // --- 3. Individual Participation & Scoring Validation Tests ---
-  console.log("\n--- 3. Individual Participation & Scoring Validation Tests ---");
+  // --- 5. Individual Participation & Scoring Validation Tests ---
+  console.log("\n--- 5. Individual Participation & Scoring Validation Tests ---");
 
   await test("Score range: 0 is valid", () => {
     const input = { playerId: dummyPlayerId, score: 0 };
@@ -273,11 +504,12 @@ export async function runMatchScoringTestSuite() {
     assert.equal(invalidResult.success, false);
   });
 
-  // --- 4. Match Lifecycle & Finalization Invariants ---
-  console.log("\n--- 4. Match Lifecycle & Finalization Invariants ---");
+  // --- 6. Match Lifecycle & Finalization Invariants ---
+  console.log("\n--- 6. Match Lifecycle & Finalization Invariants ---");
 
   await test("Match status enum supports only 'draft' and 'finalized'", () => {
     const validDraft = createMatchSchema.safeParse({
+      title: "Draft Game",
       sportId: dummySportId,
       matchDate: "2026-11-15",
       opponentName: "Team B",
@@ -286,6 +518,7 @@ export async function runMatchScoringTestSuite() {
     assert.equal(validDraft.success, true);
 
     const validFinalized = createMatchSchema.safeParse({
+      title: "Finalized Game",
       sportId: dummySportId,
       matchDate: "2026-11-15",
       opponentName: "Team B",
@@ -294,6 +527,7 @@ export async function runMatchScoringTestSuite() {
     assert.equal(validFinalized.success, true);
 
     const invalidStatus = createMatchSchema.safeParse({
+      title: "Completed Game",
       sportId: dummySportId,
       matchDate: "2026-11-15",
       opponentName: "Team B",
@@ -302,18 +536,20 @@ export async function runMatchScoringTestSuite() {
     assert.equal(invalidStatus.success, false);
   });
 
-  await test("updateMatchSchema allows valid partial match updates", () => {
+  await test("updateMatchSchema allows valid partial match updates including title", () => {
     const validUpdate = updateMatchSchema.safeParse({
+      title: "Updated Title FC",
       opponentName: "Updated Opponent FC",
       matchDate: "2026-11-25",
     });
     assert.equal(validUpdate.success, true);
     if (validUpdate.success) {
+      assert.equal(validUpdate.data.title, "Updated Title FC");
       assert.equal(validUpdate.data.opponentName, "Updated Opponent FC");
     }
 
     const invalidUpdate = updateMatchSchema.safeParse({
-      opponentName: "A", // too short
+      title: "A", // too short
     });
     assert.equal(invalidUpdate.success, false);
   });

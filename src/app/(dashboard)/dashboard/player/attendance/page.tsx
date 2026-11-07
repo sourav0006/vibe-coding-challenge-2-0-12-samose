@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { PlayerPortalService, type PlayerAttendanceHistoryResult } from "@/lib/services";
 import { PlayerAttendanceView } from "@/features/player";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function PlayerAttendancePage() {
+async function PlayerAttendanceContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -45,5 +45,13 @@ export default async function PlayerAttendancePage() {
     <AppShell user={user}>
       <PlayerAttendanceView initialData={attendanceData} />
     </AppShell>
+  );
+}
+
+export default function PlayerAttendancePage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <PlayerAttendanceContent />
+    </Suspense>
   );
 }

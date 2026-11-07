@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { SessionService } from "@/lib/services";
 import { createPracticeSessionSchema, sessionQuerySchema } from "@/lib/validation";
@@ -68,6 +69,11 @@ export async function POST(request: NextRequest) {
     }
 
     const session = await SessionService.create(parsed.data);
+
+    try {
+      revalidatePath("/dashboard/coach/sessions");
+      revalidatePath("/dashboard/coach");
+    } catch {}
 
     return NextResponse.json(
       {

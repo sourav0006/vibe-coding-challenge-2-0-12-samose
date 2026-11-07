@@ -1,4 +1,4 @@
-import React, { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 import type { CardVariant } from "@/types";
 

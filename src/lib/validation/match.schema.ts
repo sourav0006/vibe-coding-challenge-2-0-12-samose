@@ -6,6 +6,11 @@ export const matchStatusSchema = z.enum(["draft", "finalized"], {
 });
 
 export const createMatchSchema = z.object({
+  title: z
+    .string({ message: "Match title is required" })
+    .trim()
+    .min(2, { message: "Match title must be at least 2 characters long" })
+    .max(100, { message: "Match title cannot exceed 100 characters" }),
   sportId: objectIdSchema,
   matchDate: dateInputSchema,
   opponentName: z
@@ -18,6 +23,12 @@ export const createMatchSchema = z.object({
 });
 
 export const updateMatchSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(2, { message: "Match title must be at least 2 characters long" })
+    .max(100, { message: "Match title cannot exceed 100 characters" })
+    .optional(),
   sportId: objectIdSchema.optional(),
   matchDate: dateInputSchema.optional(),
   opponentName: z

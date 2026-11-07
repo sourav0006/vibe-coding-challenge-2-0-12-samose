@@ -445,7 +445,7 @@ export class PlayerService {
       updateData.sportHistory = history;
     }
 
-    return PlayerModel.findByIdAndUpdate(id, updateData, { new: true, runValidators: true }).exec();
+    return PlayerModel.findByIdAndUpdate(id, updateData, { returnDocument: "after", runValidators: true }).exec();
   }
 
   /**
@@ -539,6 +539,6 @@ export class PlayerService {
       }
     }
 
-    return PlayerModel.findByIdAndUpdate(id, input, { new: true, runValidators: true }).exec();
+    return PlayerModel.findByIdAndUpdate(id, input, { returnDocument: "after", runValidators: true }).exec();
   }
 }

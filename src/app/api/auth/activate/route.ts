@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { activateAccountSchema } from "@/lib/validation";
 import { AuthService } from "@/lib/services";
 import { activationRateLimiter } from "@/lib/auth";
@@ -21,10 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, code, password } = parseResult.data;
-    const rateLimitKey = `activate:${ip}`;
+    const normalizedEmail = email.trim().toLowerCase();
+    const rateLimitKey = `activate:${ip}:${normalizedEmail}`;
 
     // Rate limiting check
-    const rateLimit = activationRateLimiter.check(rateLimitKey);
+    const rateLimit = await activationRateLimiter.checkAsync(rateLimitKey);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         {
@@ -36,10 +38,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Activate account
-    const user = await AuthService.activateAccount({ email, code, password });
+    const user = await AuthService.activateAccount({ email: normalizedEmail, code, password });
 
     // Reset rate limiter on success
-    activationRateLimiter.reset(rateLimitKey);
+    await activationRateLimiter.resetAsync(rateLimitKey);
+
+    try {
+      revalidatePath("/dashboard/coach", "layout");
+      revalidatePath("/dashboard/coach");
+      revalidatePath("/dashboard/coach/players");
+      revalidatePath("/dashboard/coach/scouts");
+      revalidatePath("/dashboard/coach/readiness");
+    } catch {}
 
     return NextResponse.json(
       {

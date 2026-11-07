@@ -16,6 +16,16 @@ export interface SafeUser {
   role: UserRole;
 }
 
+export class RoleMismatchError extends Error {
+  public readonly actualRole: UserRole;
+
+  constructor(message: string, actualRole: UserRole) {
+    super(message);
+    this.name = "RoleMismatchError";
+    this.actualRole = actualRole;
+  }
+}
+
 export class AuthService {
   /**
    * Authenticates credentials and verifies role consistency.
@@ -49,7 +59,11 @@ export class AuthService {
 
     // Strictly enforce role isolation
     if (user.role !== input.requestedRole) {
-      throw new Error("Invalid email or password");
+      const capitalized = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+      throw new RoleMismatchError(
+        `This account is registered as a ${capitalized}. Please select the ${capitalized} portal to sign in.`,
+        user.role
+      );
     }
 
     return {
@@ -152,7 +166,7 @@ export class AuthService {
       {
         $set: { usedAt: new Date() },
       },
-      { new: true }
+      { returnDocument: "after" }
     ).exec();
 
     if (!claimedCode) {
@@ -173,7 +187,7 @@ export class AuthService {
           isActive: true,
         },
       },
-      { new: true }
+      { returnDocument: "after" }
     ).exec();
 
     if (!activatedUser) {

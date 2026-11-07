@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { MatchService } from "@/lib/services";
 import { createMatchSchema, matchQuerySchema } from "@/lib/validation";
@@ -70,11 +71,17 @@ export async function POST(request: NextRequest) {
 
     const match = await MatchService.createMatch(parsed.data);
 
+    try {
+      revalidatePath("/dashboard/coach/matches");
+      revalidatePath("/dashboard/coach");
+    } catch {}
+
     return NextResponse.json(
       {
         success: true,
         data: {
           id: match._id.toString(),
+          title: match.title,
           sportId: match.sportId.toString(),
           matchDate: match.matchDate,
           opponentName: match.opponentName,
@@ -93,11 +100,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 403 });
     }
     const message = error instanceof Error ? error.message : "Failed to create match.";
-    const status = message.startsWith("Conflict:")
-      ? 409
-      : message.startsWith("Validation Error:")
-      ? 400
-      : 500;
-    return NextResponse.json({ success: false, error: message }, { status });
+    const isConflict = message.startsWith("Conflict:") || (error as { code?: number })?.code === 11000;
+    const isValidation = message.startsWith("Validation Error:");
+    const status = isConflict ? 409 : isValidation ? 400 : 500;
+    const cleanError = isConflict && (error as { code?: number })?.code === 11000
+      ? "A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+      : message.replace(/^(Conflict|Validation Error):\s*/, "");
+
+    return NextResponse.json({ success: false, error: cleanError }, { status });
   }
 }

@@ -6,6 +6,7 @@ import {
   type IAttendance,
   type IPlayer,
   type AttendanceStatus,
+  type SessionStatus,
 } from "@/models";
 import type { MarkAttendanceInput, UpdateAttendanceInput } from "@/lib/validation";
 import type { Types } from "mongoose";
@@ -38,6 +39,8 @@ export class AttendanceService {
   /**
    * Evaluates whether a player was eligible for a practice session on its scheduled date.
    * Uses sportHistory with effectiveFrom and effectiveTo date ranges.
+   * When sessionContext indicates a closed session, enforces that players registered after
+   * the session was finalized (closedAt) are excluded from the roster and historical denominator.
    * Provides a safe, conservative fallback for legacy player records without history.
    */
   static isPlayerEligibleForSession(
@@ -47,7 +50,13 @@ export class AttendanceService {
       createdAt?: Date;
     },
     sportId: string | Types.ObjectId,
-    sessionDate: Date
+    sessionDate: Date,
+    sessionContext?: {
+      status?: SessionStatus | string;
+      closedAt?: Date | null;
+      createdAt?: Date;
+      updatedAt?: Date;
+    }
   ): boolean {
     const targetSportId = sportId.toString();
 
@@ -60,6 +69,15 @@ export class AttendanceService {
     const sessionStart = new Date(Date.UTC(sessionYear, sessionMonth, sessionDay, 0, 0, 0, 0));
     const sessionEnd = new Date(Date.UTC(sessionYear, sessionMonth, sessionDay, 23, 59, 59, 999));
 
+    // When a session has been finalized and closed, its cutoff timestamp is closedAt (or updatedAt).
+    // A player registered after the session was closed was not part of the academy during that session.
+    const isClosed = sessionContext?.status === "closed" || Boolean(sessionContext?.closedAt);
+    const sessionCutoff = isClosed && sessionContext?.closedAt
+      ? new Date(sessionContext.closedAt)
+      : isClosed && sessionContext?.updatedAt
+      ? new Date(sessionContext.updatedAt)
+      : sessionEnd;
+
     // If sport history is recorded on the player profile, check history entries
     if (player.sportHistory && player.sportHistory.length > 0) {
       return player.sportHistory.some((entry) => {
@@ -68,7 +86,7 @@ export class AttendanceService {
         }
 
         const effectiveFrom = new Date(entry.effectiveFrom);
-        if (effectiveFrom > sessionEnd) {
+        if (effectiveFrom > sessionCutoff) {
           return false;
         }
 
@@ -96,7 +114,7 @@ export class AttendanceService {
 
     if (player.createdAt) {
       const createdDate = new Date(player.createdAt);
-      if (createdDate > sessionEnd) {
+      if (createdDate > sessionCutoff) {
         return false;
       }
     }
@@ -111,6 +129,10 @@ export class AttendanceService {
   static async getEligiblePlayersForSession(session: {
     sportId: Types.ObjectId | string | { _id: Types.ObjectId | string };
     sessionDate: Date;
+    status?: SessionStatus | string;
+    closedAt?: Date | null;
+    createdAt?: Date;
+    updatedAt?: Date;
   }): Promise<IPlayer[]> {
     await connectToDatabase();
 
@@ -129,7 +151,7 @@ export class AttendanceService {
       .exec();
 
     return (activePlayers as unknown as IPlayer[]).filter((player) =>
-      this.isPlayerEligibleForSession(player, targetSportId, session.sessionDate)
+      this.isPlayerEligibleForSession(player, targetSportId, session.sessionDate, session)
     );
   }
 
@@ -269,7 +291,7 @@ export class AttendanceService {
       throw new Error("Validation Error: Cannot modify attendance for a closed session.");
     }
 
-    return AttendanceModel.findByIdAndUpdate(id, input, { new: true, runValidators: true }).exec();
+    return AttendanceModel.findByIdAndUpdate(id, input, { returnDocument: "after", runValidators: true }).exec();
   }
 
   /**
@@ -309,7 +331,7 @@ export class AttendanceService {
 
     // 2. Filter to applicable closed sessions where player was eligible on that session's date
     const applicableClosedSessions = closedSessions.filter((session) =>
-      this.isPlayerEligibleForSession(player, session.sportId._id, session.sessionDate)
+      this.isPlayerEligibleForSession(player, session.sportId._id, session.sessionDate, session)
     );
 
     // 3. Fetch all attendance records for this player

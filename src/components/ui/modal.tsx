@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useId, type ReactNode } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { CloseIcon } from "./icons";
 

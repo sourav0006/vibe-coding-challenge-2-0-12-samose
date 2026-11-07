@@ -3,7 +3,9 @@ import {
   PracticeSessionModel,
   SportModel,
   AttendanceModel,
+  PlayerModel,
   type IPracticeSession,
+  type IPlayer,
   type SessionStatus,
 } from "@/models";
 import { AttendanceService } from "./attendance.service";
@@ -277,6 +279,25 @@ export class SessionService {
 
     // Fetch existing attendance records
     const attendanceRecords = await AttendanceModel.find({ sessionId: session._id }).exec();
+
+    // For closed sessions, ensure all players with recorded attendance remain on historical sheet
+    if (session.status === "closed") {
+      const eligibleIds = new Set(eligiblePlayers.map((p) => p._id.toString()));
+      const missingRecordedIds = attendanceRecords
+        .map((r) => r.playerId.toString())
+        .filter((pId) => !eligibleIds.has(pId));
+
+      if (missingRecordedIds.length > 0) {
+        const historicalPlayers = await PlayerModel.find({ _id: { $in: missingRecordedIds } })
+          .populate<{ userId: { _id: Types.ObjectId; email: string; isActive: boolean } }>(
+            "userId",
+            "email isActive"
+          )
+          .exec();
+        eligiblePlayers.push(...(historicalPlayers as unknown as IPlayer[]));
+      }
+    }
+
     const attendanceMap = new Map<string, { status: "present" | "absent"; markedAt: Date }>();
     for (const record of attendanceRecords) {
       attendanceMap.set(record.playerId.toString(), {

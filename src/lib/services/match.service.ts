@@ -21,6 +21,7 @@ import type { Types } from "mongoose";
 
 export interface MatchListItemDTO {
   id: string;
+  title: string;
   sportId: string;
   sportName: string;
   matchDate: Date;
@@ -57,6 +58,7 @@ export interface EligibleMatchPlayerDTO {
 export interface MatchDetailDTO {
   match: {
     id: string;
+    title: string;
     sportId: string;
     sportName: string;
     matchDate: Date;
@@ -96,6 +98,7 @@ export interface PlayerMatchHistoryDTO {
   lowestScore: number | null;
   history: Array<{
     matchId: string;
+    title?: string;
     matchDate: Date;
     sportName: string;
     opponentName: string;
@@ -103,6 +106,7 @@ export interface PlayerMatchHistoryDTO {
   }>;
   matchHistory: Array<{
     matchId: string;
+    title?: string;
     matchDate: Date;
     sportName: string;
     opponentName: string;
@@ -157,7 +161,8 @@ export class MatchService {
   /**
    * Creates a new match fixture in "draft" status.
    * Validates referenced sport existence and active status.
-   * Prevents accidental duplicate match creation for the same sport, date, and opponent.
+   * Prevents accidental duplicate match creation for the same sport, date, opponent, and match title.
+   * Allows unlimited matches against the same opponent on the same date provided every match has a unique title.
    */
   static async createMatch(input: CreateMatchInput): Promise<IMatch> {
     await connectToDatabase();
@@ -170,34 +175,72 @@ export class MatchService {
       throw new Error("Validation Error: Cannot schedule a match fixture for an inactive sport.");
     }
 
-    const trimmedOpponent = input.opponentName.trim();
+    const trimmedTitle = (input.title || "").trim();
+    if (!trimmedTitle) {
+      throw new Error("Validation Error: Match title cannot be empty.");
+    }
+    if (trimmedTitle.length < 2) {
+      throw new Error("Validation Error: Match title must be at least 2 characters long.");
+    }
+    if (trimmedTitle.length > 100) {
+      throw new Error("Validation Error: Match title cannot exceed 100 characters.");
+    }
+
+    const trimmedOpponent = (input.opponentName || "").trim();
     if (!trimmedOpponent) {
       throw new Error("Validation Error: Opponent name cannot be empty.");
     }
+    if (trimmedOpponent.length < 2) {
+      throw new Error("Validation Error: Opponent name must be at least 2 characters long.");
+    }
+    if (trimmedOpponent.length > 100) {
+      throw new Error("Validation Error: Opponent name cannot exceed 100 characters.");
+    }
+
+    const normalizedTitle = trimmedTitle.toLowerCase();
+    const normalizedOpponent = trimmedOpponent.toLowerCase();
 
     const { startOfDay, endOfDay, normalizedDate } = this.normalizeMatchDate(input.matchDate);
 
-    // Prevent duplicate matches for the same sport, calendar date, and opponent name
+    // Prevent duplicate matches for the same sport, calendar date, opponent name, and match title (case-insensitive)
     const existing = await MatchModel.findOne({
       sportId: input.sportId,
       matchDate: { $gte: startOfDay, $lte: endOfDay },
-      opponentName: new RegExp(`^${trimmedOpponent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+      $or: [
+        { normalizedOpponent, normalizedTitle },
+        {
+          opponentName: new RegExp(`^${trimmedOpponent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+          title: new RegExp(`^${trimmedTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+        },
+      ],
     }).exec();
 
     if (existing) {
       throw new Error(
-        `Conflict: A match fixture already exists for ${sport.name} against "${trimmedOpponent}" on the selected date.`
+        "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
       );
     }
 
     const match = new MatchModel({
+      title: trimmedTitle,
+      normalizedTitle,
       sportId: input.sportId,
       matchDate: normalizedDate,
       opponentName: trimmedOpponent,
+      normalizedOpponent,
       status: "draft",
     });
 
-    return match.save();
+    try {
+      return await match.save();
+    } catch (saveError: unknown) {
+      if ((saveError as { code?: number })?.code === 11000) {
+        throw new Error(
+          "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+        );
+      }
+      throw saveError;
+    }
   }
 
   /**
@@ -207,6 +250,10 @@ export class MatchService {
     _id?: Types.ObjectId | string;
     sportId: Types.ObjectId | string | { _id: Types.ObjectId | string };
     matchDate: Date;
+    status?: string;
+    finalizedAt?: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
   }): Promise<{
     sameDaySession: { id: string; status: "open" | "closed" } | null;
     roster: EligibleMatchPlayerDTO[];
@@ -228,7 +275,12 @@ export class MatchService {
       .exec();
 
     const sportEligiblePlayers = (activePlayers as unknown as IPlayer[]).filter((player) =>
-      AttendanceService.isPlayerEligibleForSession(player, targetSportId, match.matchDate)
+      AttendanceService.isPlayerEligibleForSession(player, targetSportId, match.matchDate, {
+        status: match.status === "finalized" ? "closed" : "open",
+        closedAt: match.finalizedAt,
+        createdAt: match.createdAt,
+        updatedAt: match.updatedAt,
+      })
     );
 
     // 2. Check for a practice session on the same sport and calendar date
@@ -352,7 +404,8 @@ export class MatchService {
 
     if (query.search && query.search.trim()) {
       const sanitized = query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      filter.opponentName = new RegExp(sanitized, "i");
+      const searchRegex = new RegExp(sanitized, "i");
+      filter.$or = [{ opponentName: searchRegex }, { title: searchRegex }];
     }
 
     const total = await MatchModel.countDocuments(filter).exec();
@@ -385,6 +438,7 @@ export class MatchService {
 
         return {
           id: doc._id.toString(),
+          title: doc.title || `${doc.opponentName} Fixture`,
           sportId: doc.sportId ? doc.sportId._id.toString() : "",
           sportName: doc.sportId?.name || "Unassigned",
           matchDate: doc.matchDate,
@@ -484,6 +538,7 @@ export class MatchService {
     return {
       match: {
         id: match._id.toString(),
+        title: match.title || `${match.opponentName} Fixture`,
         sportId: match.sportId ? match.sportId._id.toString() : "",
         sportName: match.sportId?.name || "Unassigned",
         matchDate: match.matchDate,
@@ -708,6 +763,7 @@ export class MatchService {
    */
   static async updateMatch(id: string, input: UpdateMatchInput): Promise<IMatch | null> {
     await connectToDatabase();
+    const { Types } = await import("mongoose");
 
     const match = await MatchModel.findById(id).exec();
     if (!match) {
@@ -725,20 +781,70 @@ export class MatchService {
       return this.finalizeMatch(id);
     }
 
-    if (input.matchDate) {
+    if (input.title !== undefined) {
+      const trimmedTitle = input.title.trim();
+      if (!trimmedTitle || trimmedTitle.length < 2) {
+        throw new Error("Validation Error: Match title must be at least 2 characters long.");
+      }
+      if (trimmedTitle.length > 100) {
+        throw new Error("Validation Error: Match title cannot exceed 100 characters.");
+      }
+      match.title = trimmedTitle;
+      match.normalizedTitle = trimmedTitle.toLowerCase();
+    }
+
+    if (input.opponentName !== undefined) {
+      const trimmed = input.opponentName.trim();
+      if (!trimmed || trimmed.length < 2) {
+        throw new Error("Validation Error: Opponent name must be at least 2 characters long.");
+      }
+      if (trimmed.length > 100) {
+        throw new Error("Validation Error: Opponent name cannot exceed 100 characters.");
+      }
+      match.opponentName = trimmed;
+      match.normalizedOpponent = trimmed.toLowerCase();
+    }
+
+    if (input.matchDate !== undefined) {
       const { normalizedDate } = this.normalizeMatchDate(input.matchDate);
       match.matchDate = normalizedDate;
     }
 
-    if (input.opponentName) {
-      const trimmed = input.opponentName.trim();
-      if (!trimmed) {
-        throw new Error("Validation Error: Opponent name cannot be empty.");
-      }
-      match.opponentName = trimmed;
+    if (input.sportId !== undefined) {
+      match.sportId = new Types.ObjectId(input.sportId);
     }
 
-    return match.save();
+    // Check for duplicate conflict with other matches
+    const { startOfDay, endOfDay } = this.normalizeMatchDate(match.matchDate);
+    const existing = await MatchModel.findOne({
+      _id: { $ne: match._id },
+      sportId: match.sportId,
+      matchDate: { $gte: startOfDay, $lte: endOfDay },
+      $or: [
+        { normalizedOpponent: match.normalizedOpponent, normalizedTitle: match.normalizedTitle },
+        {
+          opponentName: new RegExp(`^${match.opponentName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+          title: new RegExp(`^${match.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+        },
+      ],
+    }).exec();
+
+    if (existing) {
+      throw new Error(
+        "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+      );
+    }
+
+    try {
+      return await match.save();
+    } catch (saveError: unknown) {
+      if ((saveError as { code?: number })?.code === 11000) {
+        throw new Error(
+          "Conflict: A match with this title already exists against this opponent in this sport on the selected date. Please use a different match title."
+        );
+      }
+      throw saveError;
+    }
   }
 
   /**
@@ -789,6 +895,7 @@ export class MatchService {
 
     const history: Array<{
       matchId: string;
+      title?: string;
       matchDate: Date;
       sportName: string;
       opponentName: string;
@@ -805,6 +912,7 @@ export class MatchService {
       for (const p of finalizedParticipations) {
         history.push({
           matchId: p.matchId._id.toString(),
+          title: p.matchId.title || `${p.matchId.opponentName} Fixture`,
           matchDate: p.matchId.matchDate,
           sportName: p.matchId.sportId?.name || "Unassigned",
           opponentName: p.matchId.opponentName,

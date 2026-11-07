@@ -5,7 +5,10 @@ import {
   ActivationCodeModel,
   MatchModel,
   MatchParticipantModel,
+  PracticeSessionModel,
+  AttendanceModel,
 } from "@/models";
+import type { Types } from "mongoose";
 
 export interface CoachStats {
   totalPlayers: number;
@@ -14,6 +17,19 @@ export interface CoachStats {
   pendingActivations: number;
   totalMatches: number;
   totalParticipations: number;
+  averageAttendanceRate?: number | null;
+  scoutReadyCount?: number;
+}
+
+export interface AttendanceTrendItem {
+  sessionId: string;
+  sessionDate: Date;
+  dateLabel: string;
+  sportName: string;
+  presentCount: number;
+  absentCount: number;
+  totalMarked: number;
+  attendanceRate: number;
 }
 
 export interface RecentPlayerItem {
@@ -27,6 +43,7 @@ export interface RecentPlayerItem {
 
 export interface RecentMatchItem {
   id: string;
+  title?: string;
   sportName: string;
   opponentName: string;
   matchDate: Date;
@@ -108,6 +125,32 @@ export class DashboardService {
       matchId: { $in: finalizedMatchIds },
     }).exec();
 
+    // 7. Average attendance rate across all closed practice sessions
+    const closedSessions = await PracticeSessionModel.find({ status: "closed" }).select("_id").exec();
+    let averageAttendanceRate: number | null = null;
+    if (closedSessions.length > 0) {
+      const closedSessionIds = closedSessions.map((s) => s._id);
+      const attendanceAggregation = await AttendanceModel.aggregate([
+        { $match: { sessionId: { $in: closedSessionIds } } },
+        {
+          $group: {
+            _id: null,
+            totalMarked: { $sum: 1 },
+            totalPresent: {
+              $sum: { $cond: [{ $eq: ["$status", "present"] }, 1, 0] },
+            },
+          },
+        },
+      ]).exec();
+
+      if (attendanceAggregation[0] && attendanceAggregation[0].totalMarked > 0) {
+        averageAttendanceRate =
+          Math.round(
+            (attendanceAggregation[0].totalPresent / attendanceAggregation[0].totalMarked) * 1000
+          ) / 10;
+      }
+    }
+
     return {
       totalPlayers,
       totalSports,
@@ -115,6 +158,7 @@ export class DashboardService {
       pendingActivations,
       totalMatches,
       totalParticipations,
+      averageAttendanceRate,
     };
   }
 
@@ -142,6 +186,7 @@ export class DashboardService {
 
         return {
           id: m._id.toString(),
+          title: m.title || "Match Fixture",
           sportName: m.sportId?.name || "Unassigned",
           opponentName: m.opponentName,
           matchDate: m.matchDate,
@@ -232,6 +277,60 @@ export class DashboardService {
         usedAt: c.usedAt,
         createdAt: c.createdAt,
         status,
+      };
+    });
+  }
+
+  /**
+   * Retrieves closed practice sessions chronologically with calculated real attendance rates.
+   * Exclusively includes closed sessions with actual marked attendance records.
+   */
+  static async getAttendanceTrend(limit = 8): Promise<AttendanceTrendItem[]> {
+    await connectToDatabase();
+
+    const closedSessions = await PracticeSessionModel.find({ status: "closed" })
+      .sort({ sessionDate: 1 })
+      .limit(limit)
+      .populate<{ sportId: { _id: Types.ObjectId; name: string } }>("sportId", "name")
+      .exec();
+
+    if (closedSessions.length === 0) {
+      return [];
+    }
+
+    const sessionIds = closedSessions.map((s) => s._id);
+    const attendanceRecords = await AttendanceModel.find({
+      sessionId: { $in: sessionIds },
+    }).exec();
+
+    const countsBySession = new Map<string, { present: number; absent: number }>();
+    for (const rec of attendanceRecords) {
+      const sId = rec.sessionId.toString();
+      if (!countsBySession.has(sId)) {
+        countsBySession.set(sId, { present: 0, absent: 0 });
+      }
+      const entry = countsBySession.get(sId)!;
+      if (rec.status === "present") entry.present++;
+      else if (rec.status === "absent") entry.absent++;
+    }
+
+    return closedSessions.map((session) => {
+      const sId = session._id.toString();
+      const counts = countsBySession.get(sId) || { present: 0, absent: 0 };
+      const totalMarked = counts.present + counts.absent;
+      const rate = totalMarked > 0 ? Math.round((counts.present / totalMarked) * 1000) / 10 : 0;
+      const dateObj = new Date(session.sessionDate);
+      const dateLabel = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+      return {
+        sessionId: sId,
+        sessionDate: session.sessionDate,
+        dateLabel,
+        sportName: session.sportId?.name || "Discipline",
+        presentCount: counts.present,
+        absentCount: counts.absent,
+        totalMarked,
+        attendanceRate: rate,
       };
     });
   }

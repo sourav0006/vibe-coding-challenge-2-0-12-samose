@@ -1,17 +1,19 @@
+import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { MatchService } from "@/lib/services";
 import { MatchDetailView } from "@/features/matches";
 import { objectIdSchema } from "@/lib/validation";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function MatchDetailPage({
-  params,
-}: {
+interface MatchDetailPageProps {
   params: Promise<{ id: string }>;
-}) {
+}
+
+async function MatchDetailContent({
+  params,
+}: MatchDetailPageProps) {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -44,5 +46,13 @@ export default async function MatchDetailPage({
     <AppShell user={user}>
       <MatchDetailView initialDetails={matchDetails} />
     </AppShell>
+  );
+}
+
+export default function MatchDetailPage(props: MatchDetailPageProps) {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <MatchDetailContent {...props} />
+    </Suspense>
   );
 }

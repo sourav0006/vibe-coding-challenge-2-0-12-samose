@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { requireCoach, AuthenticationError, AuthorizationError } from "@/lib/auth";
 import { RemarkService } from "@/lib/services";
 import { objectIdSchema, updateCoachRemarkSchema } from "@/lib/validation";
@@ -42,6 +43,12 @@ export async function PATCH(
         { status: 404 }
       );
     }
+
+    try {
+      revalidatePath(`/dashboard/coach/players/${id}`);
+      revalidatePath("/dashboard/player/remarks");
+      revalidatePath("/dashboard/player");
+    } catch {}
 
     return NextResponse.json(
       {
@@ -94,6 +101,12 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    try {
+      revalidatePath(`/dashboard/coach/players/${id}`);
+      revalidatePath("/dashboard/player/remarks");
+      revalidatePath("/dashboard/player");
+    } catch {}
 
     return NextResponse.json(
       {

@@ -1,12 +1,12 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { AppShell } from "@/components/layout";
 import { SportService } from "@/lib/services";
 import { CreateSessionForm } from "@/features/sessions";
+import DashboardLoading from "@/app/(dashboard)/loading";
 
-export const instant = false;
-
-export default async function CreateSessionPage() {
+async function CreateSessionContent() {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -34,5 +34,13 @@ export default async function CreateSessionPage() {
     <AppShell user={user}>
       <CreateSessionForm sportsList={sportsList} />
     </AppShell>
+  );
+}
+
+export default function CreateSessionPage() {
+  return (
+    <Suspense fallback={<DashboardLoading />}>
+      <CreateSessionContent />
+    </Suspense>
   );
 }
