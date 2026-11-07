@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -115,23 +115,14 @@ export function PlayerListView({
   );
 
   // Search/filter trigger on effect with light debounce
-  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      // If server already provided initialPlayers and no filters are active, preserve them without an immediate redundant re-fetch
-      if (initialPlayers !== null && search === "" && sportId === "all" && status === "all") {
-        return;
-      }
-    }
-
     const timer = setTimeout(() => {
       fetchPlayers(1);
       setPage(1);
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [search, sportId, status, fetchPlayers, initialPlayers]);
+  }, [search, sportId, status, fetchPlayers]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
@@ -347,7 +338,7 @@ export function PlayerListView({
                         </div>
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <Link href={`/dashboard/coach/players/${player.id}`} prefetch={true}>
+                        <Link href={`/dashboard/coach/players/${player.id}`}>
                           <Button
                             size="sm"
                             variant="outline"

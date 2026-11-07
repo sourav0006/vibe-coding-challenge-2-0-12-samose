@@ -286,7 +286,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         <aside
           className={cn(
             "hidden md:flex flex-col shrink-0 bg-[#11262C] border-r border-[#1B3B44] transition-all duration-200 ease-in-out sticky top-0 h-screen z-30 overflow-hidden",
-            sidebarCollapsed ? "w-20 min-w-20 max-w-20" : "w-64 min-w-64 max-w-64"
+            sidebarCollapsed ? "w-20" : "w-64"
           )}
         >
           {/* Sidebar Top Header with Logo & Toggle Button */}
@@ -339,14 +339,12 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Navigation Items */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden relative z-10">
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto relative z-10">
             {coachNavItems.map((item) => (
               <div key={item.href} className="relative group">
                 <Link
                   href={item.href}
-                  prefetch={true}
                   title={sidebarCollapsed ? item.label : undefined}
-                  aria-label={sidebarCollapsed ? item.label : undefined}
                   className={cn(
                     "flex items-center rounded-xl text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D95B24]",
                     sidebarCollapsed ? "justify-center p-3" : "gap-3 px-3.5 py-2.5",
@@ -367,11 +365,7 @@ function AppShellContent({ user, children }: AppShellProps) {
 
                 {/* Floating Tooltip when collapsed */}
                 {sidebarCollapsed && (
-                  <div
-                    role="tooltip"
-                    aria-hidden="true"
-                    className="hidden pointer-events-none group-hover:block absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg z-50 whitespace-nowrap"
-                  >
+                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
                     {item.label}
                   </div>
                 )}
@@ -403,7 +397,7 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Bottom: Role Indicator & Expand Helper */}
-          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0 overflow-hidden">
+          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0">
             {sidebarCollapsed ? (
               <button
                 type="button"
@@ -438,7 +432,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         </aside>
 
         {/* Main Content Area (Naturally Takes Remaining Width) */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8] overflow-x-hidden">
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8]">
           {/* Top Header Bar */}
           <header className="sticky top-0 z-20 w-full bg-[#F5EBD8]/95 backdrop-blur-md border-b border-[#E2D7C3] h-16 shrink-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
@@ -594,7 +588,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         <aside
           className={cn(
             "hidden md:flex flex-col shrink-0 bg-[#11262C] border-r border-[#1B3B44] transition-all duration-200 ease-in-out sticky top-0 h-screen z-30 overflow-hidden",
-            sidebarCollapsed ? "w-20 min-w-20 max-w-20" : "w-64 min-w-64 max-w-64"
+            sidebarCollapsed ? "w-20" : "w-64"
           )}
         >
           {/* Sidebar Top Header with Logo & Toggle Button */}
@@ -647,14 +641,12 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Navigation Items */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden relative z-10">
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto relative z-10">
             {playerPrimaryNavItems.map((item) => (
               <div key={item.href} className="relative group">
                 <Link
                   href={item.href}
-                  prefetch={true}
                   title={sidebarCollapsed ? item.label : undefined}
-                  aria-label={sidebarCollapsed ? item.label : undefined}
                   className={cn(
                     "flex items-center rounded-xl text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D95B24]",
                     sidebarCollapsed ? "justify-center p-3" : "gap-3 px-3.5 py-2.5",
@@ -675,11 +667,7 @@ function AppShellContent({ user, children }: AppShellProps) {
 
                 {/* Floating Tooltip when collapsed */}
                 {sidebarCollapsed && (
-                  <div
-                    role="tooltip"
-                    aria-hidden="true"
-                    className="hidden pointer-events-none group-hover:block absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg z-50 whitespace-nowrap"
-                  >
+                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
                     {item.label}
                   </div>
                 )}
@@ -693,9 +681,7 @@ function AppShellContent({ user, children }: AppShellProps) {
             <div className="relative group">
               <Link
                 href={playerProfileNavItem.href}
-                prefetch={true}
                 title={sidebarCollapsed ? playerProfileNavItem.label : undefined}
-                aria-label={sidebarCollapsed ? playerProfileNavItem.label : undefined}
                 className={cn(
                   "flex items-center rounded-xl text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D95B24]",
                   sidebarCollapsed ? "justify-center p-3" : "gap-3 px-3.5 py-2.5",
@@ -715,11 +701,7 @@ function AppShellContent({ user, children }: AppShellProps) {
               </Link>
 
               {sidebarCollapsed && (
-                <div
-                  role="tooltip"
-                  aria-hidden="true"
-                  className="hidden pointer-events-none group-hover:block absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg z-50 whitespace-nowrap"
-                >
+                <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
                   {playerProfileNavItem.label}
                 </div>
               )}
@@ -748,7 +730,7 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Bottom: Role Indicator & Expand Helper */}
-          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0 overflow-hidden">
+          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0">
             {sidebarCollapsed ? (
               <button
                 type="button"
@@ -783,7 +765,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8] overflow-x-hidden">
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8]">
           {/* Top Header Bar */}
           <header className="sticky top-0 z-20 w-full bg-[#F5EBD8]/95 backdrop-blur-md border-b border-[#E2D7C3] h-16 shrink-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
@@ -956,7 +938,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         <aside
           className={cn(
             "hidden md:flex flex-col shrink-0 bg-[#11262C] border-r border-[#1B3B44] transition-all duration-200 ease-in-out sticky top-0 h-screen z-30 overflow-hidden",
-            sidebarCollapsed ? "w-20 min-w-20 max-w-20" : "w-64 min-w-64 max-w-64"
+            sidebarCollapsed ? "w-20" : "w-64"
           )}
         >
           {/* Sidebar Top Header with Logo & Toggle Button */}
@@ -1009,14 +991,12 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Navigation Items */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto overflow-x-hidden relative z-10">
+          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto relative z-10">
             {scoutNavItems.map((item) => (
               <div key={item.href} className="relative group">
                 <Link
                   href={item.href}
-                  prefetch={true}
                   title={sidebarCollapsed ? item.label : undefined}
-                  aria-label={sidebarCollapsed ? item.label : undefined}
                   className={cn(
                     "flex items-center rounded-xl text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D95B24]",
                     sidebarCollapsed ? "justify-center p-3" : "gap-3 px-3.5 py-2.5",
@@ -1037,11 +1017,7 @@ function AppShellContent({ user, children }: AppShellProps) {
 
                 {/* Floating Tooltip when collapsed */}
                 {sidebarCollapsed && (
-                  <div
-                    role="tooltip"
-                    aria-hidden="true"
-                    className="hidden pointer-events-none group-hover:block absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg z-50 whitespace-nowrap"
-                  >
+                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2.5 py-1 bg-[#132B32] border border-[#1B3B44] text-[#FFF9EF] text-[11px] font-semibold rounded-md shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
                     {item.label}
                   </div>
                 )}
@@ -1071,7 +1047,7 @@ function AppShellContent({ user, children }: AppShellProps) {
           </div>
 
           {/* Sidebar Bottom: Role Indicator & Expand Helper */}
-          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0 overflow-hidden">
+          <div className="p-3 border-t border-[#1B3B44] bg-[#0E1F24] shrink-0">
             {sidebarCollapsed ? (
               <button
                 type="button"
@@ -1106,7 +1082,7 @@ function AppShellContent({ user, children }: AppShellProps) {
         </aside>
 
         {/* Main Content Area */}
-        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8] overflow-x-hidden">
+        <div className="flex-1 min-w-0 flex flex-col min-h-screen bg-[#F5EBD8]">
           {/* Top Header Bar */}
           <header className="sticky top-0 z-20 w-full bg-[#F5EBD8]/95 backdrop-blur-md border-b border-[#E2D7C3] h-16 shrink-0">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">

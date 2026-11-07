@@ -12,19 +12,6 @@ export class SportService {
   }
 
   /**
-   * Fast query for sports dropdown without running player count aggregations
-   */
-  static async findAllSimple(): Promise<Array<{ id: string; name: string; isActive: boolean }>> {
-    await connectToDatabase();
-    const docs = await SportModel.find({}, "name isActive").sort({ name: 1 }).lean().exec();
-    return docs.map((d) => ({
-      id: d._id.toString(),
-      name: d.name,
-      isActive: d.isActive,
-    }));
-  }
-
-  /**
    * Finds a sport by its ID
    */
   static async findById(id: string): Promise<ISport | null> {

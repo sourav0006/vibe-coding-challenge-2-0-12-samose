@@ -375,7 +375,7 @@ export function SessionListView({
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <Link href={`/dashboard/coach/sessions/${session.id}`} prefetch={true}>
+                        <Link href={`/dashboard/coach/sessions/${session.id}`}>
                           <Button
                             variant={session.status === "open" ? "primary" : "outline"}
                             size="sm"

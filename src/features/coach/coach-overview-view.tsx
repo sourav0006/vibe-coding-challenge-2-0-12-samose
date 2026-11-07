@@ -59,7 +59,6 @@ function ScoreboardCard({
   return (
     <Link
       href={href}
-      prefetch={true}
       className="coach-animate-card relative group flex flex-col items-center justify-center p-3 sm:p-3.5 min-h-[105px] transition-transform hover:-translate-y-0.5"
     >
       {/* Vintage chamfered plaque SVG background with crisp vector cut corners */}
@@ -182,14 +181,7 @@ export function CoachOverviewView({
   }
 
   // Client-side background fetch on mount/navigation to ensure zero stale metrics
-  const isInitialMount = useRef(true);
   useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      if (initialStats) {
-        return;
-      }
-    }
     let ignore = false;
     fetch("/api/coach/dashboard/stats")
       .then((res) => res.json())
@@ -603,7 +595,6 @@ export function CoachOverviewView({
             <div className="pt-3 text-right border-t border-[#EAE0CF]">
               <Link
                 href="/dashboard/coach/sessions"
-                prefetch={true}
                 className="inline-flex items-center gap-1 font-barlow-condensed font-bold text-xs sm:text-[13px] tracking-wide text-[#D95B24] hover:text-[#B84617] transition-colors"
               >
                 <span>View All Sessions</span>
@@ -738,7 +729,6 @@ export function CoachOverviewView({
             <div className="pt-3 text-right border-t border-[#EAE0CF]">
               <Link
                 href="/dashboard/coach/readiness"
-                prefetch={true}
                 className="inline-flex items-center gap-1 font-barlow-condensed font-bold text-xs sm:text-[13px] tracking-wide text-[#D95B24] hover:text-[#B84617] transition-colors"
               >
                 <span>View Scouting Board</span>
@@ -766,7 +756,6 @@ export function CoachOverviewView({
               </h3>
               <Link
                 href="/dashboard/coach/players"
-                prefetch={true}
                 className="font-barlow-condensed font-bold text-xs sm:text-[13px] tracking-wide text-[#D95B24] hover:text-[#B84617] transition-colors"
               >
                 View All Players &rarr;
@@ -786,7 +775,6 @@ export function CoachOverviewView({
                         <div className="min-w-0">
                           <Link
                             href={`/dashboard/coach/players/${player.id}`}
-                            prefetch={true}
                             className="text-xs font-bold text-[#132B32] hover:text-[#D95B24] truncate block"
                           >
                             {player.fullName}
@@ -813,7 +801,6 @@ export function CoachOverviewView({
                         )}
                         <Link
                           href={`/dashboard/coach/players/${player.id}`}
-                          prefetch={true}
                           className="text-[#8C7F70] hover:text-[#132B32] p-1"
                           title="View Profile"
                         >
@@ -839,7 +826,6 @@ export function CoachOverviewView({
               </h3>
               <Link
                 href="/dashboard/coach/matches"
-                prefetch={true}
                 className="font-barlow-condensed font-bold text-xs sm:text-[13px] tracking-wide text-[#D95B24] hover:text-[#B84617] transition-colors"
               >
                 View All Matches &rarr;
@@ -854,7 +840,6 @@ export function CoachOverviewView({
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/dashboard/coach/matches/${match.id}`}
-                          prefetch={true}
                           className="text-xs font-bold text-[#132B32] hover:text-[#D95B24] truncate"
                         >
                           {match.title || `vs. ${match.opponentName}`}
@@ -878,7 +863,6 @@ export function CoachOverviewView({
                       )}
                       <Link
                         href={`/dashboard/coach/matches/${match.id}`}
-                        prefetch={true}
                         className="text-[#8C7F70] hover:text-[#132B32] p-1"
                         title="View match summary"
                       >
@@ -914,7 +898,7 @@ export function CoachOverviewView({
 
             <div className="flex flex-wrap items-center gap-2.5">
               {/* 1. Add Player */}
-              <Link href="/dashboard/coach/players/new" prefetch={true}>
+              <Link href="/dashboard/coach/players/new">
                 <Button
                   size="sm"
                   className="bg-[#D95B24] hover:bg-[#C24F1D] text-white font-barlow-condensed font-bold text-sm h-9 px-4 rounded-xl shadow-xs gap-1.5 cursor-pointer"
@@ -925,7 +909,7 @@ export function CoachOverviewView({
               </Link>
 
               {/* 2. Create Session */}
-              <Link href="/dashboard/coach/sessions/new" prefetch={true}>
+              <Link href="/dashboard/coach/sessions/new">
                 <Button
                   size="sm"
                   variant="outline"
@@ -937,7 +921,7 @@ export function CoachOverviewView({
               </Link>
 
               {/* 3. Schedule Match */}
-              <Link href="/dashboard/coach/matches/new" prefetch={true}>
+              <Link href="/dashboard/coach/matches/new">
                 <Button
                   size="sm"
                   variant="outline"
@@ -949,7 +933,7 @@ export function CoachOverviewView({
               </Link>
 
               {/* 4. Manage Scouts */}
-              <Link href="/dashboard/coach/scouts" prefetch={true}>
+              <Link href="/dashboard/coach/scouts">
                 <Button
                   size="sm"
                   variant="outline"
@@ -961,7 +945,7 @@ export function CoachOverviewView({
               </Link>
 
               {/* 5. View Readiness */}
-              <Link href="/dashboard/coach/readiness" prefetch={true}>
+              <Link href="/dashboard/coach/readiness">
                 <Button
                   size="sm"
                   className="bg-[#1B4D3E] hover:bg-[#143B30] text-white font-barlow-condensed font-bold text-sm h-9 px-4 rounded-xl shadow-xs gap-1.5 cursor-pointer"
