@@ -392,7 +392,7 @@ export function MatchListView({
                       )}
                     </td>
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <Link href={`/dashboard/coach/matches/${match.id}`}>
+                      <Link href={`/dashboard/coach/matches/${match.id}`} prefetch={true}>
                         <Button
                           size="sm"
                           variant={match.status === "finalized" ? "outline" : "primary"}

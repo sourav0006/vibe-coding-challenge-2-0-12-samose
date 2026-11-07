@@ -13,18 +13,55 @@ import {
 import { MascotIcon } from "@/components/mascot/mascot-icons";
 import type { UserRole } from "@/models";
 
+interface DemoCredential {
+  role: UserRole;
+  label: string;
+  email: string;
+  password: string;
+  badgeColor: string;
+  dotColor: string;
+}
+
+const DEMO_CREDENTIALS: Record<UserRole, DemoCredential> = {
+  coach: {
+    role: "coach",
+    label: "Coach Portal",
+    email: "coach@gmail.com",
+    password: "Coach@456",
+    badgeColor: "bg-[#D95B24] text-white",
+    dotColor: "bg-[#D95B24]",
+  },
+  player: {
+    role: "player",
+    label: "Player Portal",
+    email: "sourav@gmail.com",
+    password: "Sourav@123",
+    badgeColor: "bg-[#1B3B44] text-[#FFF9EF]",
+    dotColor: "bg-[#1B3B44]",
+  },
+  scout: {
+    role: "scout",
+    label: "Scout Portal",
+    email: "scout01@gmail.com",
+    password: "Scout01@123",
+    badgeColor: "bg-[#8C6D23] text-white",
+    dotColor: "bg-[#8C6D23]",
+  },
+};
+
 function LoginForm() {
   const searchParams = useSearchParams();
 
   const roleParam = searchParams.get("role");
   const errorParam = searchParams.get("error");
 
-  const initialRole: UserRole =
-    roleParam === "player" || roleParam === "scout" || roleParam === "coach"
-      ? roleParam
-      : "coach";
+  const hasRoleParam =
+    roleParam === "player" || roleParam === "scout" || roleParam === "coach";
 
-  const [role, setRole] = useState<UserRole>(initialRole);
+  const initialRole: UserRole | null = hasRoleParam ? (roleParam as UserRole) : null;
+
+  const [role, setRole] = useState<UserRole | null>(initialRole);
+  const [viewAllCredentials, setViewAllCredentials] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -70,6 +107,11 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submitting || success) return;
+
+    if (!role) {
+      setError("Please select a portal role (Coach, Player, or Scout).");
+      return;
+    }
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
@@ -157,6 +199,7 @@ function LoginForm() {
         <form
           className="ims-form"
           onSubmit={handleSubmit}
+          autoComplete="off"
           aria-busy={submitting}
           onFocusCapture={(e) => {
             const field = e.target
@@ -197,6 +240,104 @@ function LoginForm() {
             </div>
           </div>
 
+          {/* ========================================================= */}
+          {/* JUDGE & DEMO CREDENTIALS DISPLAY                          */}
+          {/* ========================================================= */}
+          <div className="bg-[#FAF4E8] border border-[#DACBB4] rounded-2xl p-3 sm:p-3.5 transition-all text-xs">
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-[#EAE0CF]">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-barlow-condensed font-bold tracking-wider uppercase bg-[#11262C] text-[#FFF9EF]">
+                  ✦ JUDGE CREDENTIALS
+                </span>
+                {role && !viewAllCredentials ? (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-barlow-condensed font-bold tracking-wider uppercase ${DEMO_CREDENTIALS[role].badgeColor}`}>
+                    {DEMO_CREDENTIALS[role].label}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-barlow-condensed font-bold tracking-wider uppercase bg-[#E5DBC7] text-[#11262C]">
+                    All Roles Available
+                  </span>
+                )}
+              </div>
+
+              {role && (
+                <button
+                  type="button"
+                  onClick={() => setViewAllCredentials((prev) => !prev)}
+                  className="text-[11px] font-barlow-condensed font-bold text-[#D95B24] hover:text-[#B84617] underline underline-offset-2 cursor-pointer transition-colors"
+                >
+                  {viewAllCredentials ? `Show ${DEMO_CREDENTIALS[role].label} Only` : "View All 3 Roles →"}
+                </button>
+              )}
+            </div>
+
+            {/* Prominent Mandatory Instruction */}
+            <p className="mt-2 text-[11px] sm:text-xs text-[#5C6E72] leading-snug">
+              <strong className="text-[#11262C] font-semibold">Important:</strong> Please enter your credentials manually for the best experience. Avoid copy-pasting.
+            </p>
+
+            {/* Single Selected Role Display */}
+            {role && !viewAllCredentials ? (
+              <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="bg-[#FFF9EF] border border-[#E2D7C3] rounded-xl px-3 py-2 flex flex-col justify-center">
+                  <span className="text-[10px] uppercase tracking-wider font-barlow-condensed font-bold text-[#718E94]">
+                    {DEMO_CREDENTIALS[role].label} Email
+                  </span>
+                  <span className="font-mono font-semibold text-[#11262C] text-xs sm:text-[13px] break-all select-text mt-0.5">
+                    {DEMO_CREDENTIALS[role].email}
+                  </span>
+                </div>
+                <div className="bg-[#FFF9EF] border border-[#E2D7C3] rounded-xl px-3 py-2 flex flex-col justify-center">
+                  <span className="text-[10px] uppercase tracking-wider font-barlow-condensed font-bold text-[#718E94]">
+                    {DEMO_CREDENTIALS[role].label} Password
+                  </span>
+                  <span className="font-mono font-semibold text-[#11262C] text-xs sm:text-[13px] break-all select-text mt-0.5">
+                    {DEMO_CREDENTIALS[role].password}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* All Three Roles Display (When no role selected or user toggles View All) */
+              <div className="mt-2 space-y-1.5">
+                {(["coach", "player", "scout"] as const).map((r) => {
+                  const cred = DEMO_CREDENTIALS[r];
+                  const isSelected = role === r;
+                  return (
+                    <div
+                      key={r}
+                      onClick={() => {
+                        setRole(r);
+                        if (error) setError(null);
+                      }}
+                      className={`bg-[#FFF9EF] border rounded-xl p-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-[#D95B24] ring-1 ring-[#D95B24] shadow-2xs"
+                          : "border-[#E2D7C3] hover:border-[#DACBB4]"
+                      }`}
+                      title={`Click to select ${cred.label}`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-barlow-condensed font-bold tracking-wider uppercase ${cred.badgeColor}`}>
+                          {cred.label}
+                        </span>
+                        {isSelected && (
+                          <span className="text-[10px] font-barlow-condensed font-bold text-[#D95B24] uppercase">
+                            • Selected
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[11px] font-mono text-[#11262C]">
+                        <span>Email: <strong className="select-text">{cred.email}</strong></span>
+                        <span className="text-[#DACBB4] hidden sm:inline">|</span>
+                        <span>PW: <strong className="select-text">{cred.password}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Email Address */}
           <div className="ims-field" data-login-field="email">
             <label htmlFor="ims-email">Email Address</label>
@@ -206,7 +347,7 @@ function LoginForm() {
                 id="ims-email"
                 name="email"
                 type="email"
-                autoComplete="username"
+                autoComplete="off"
                 required
                 value={email}
                 onChange={(e) => {
@@ -229,7 +370,7 @@ function LoginForm() {
               <input
                 id="ims-password"
                 name="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 type={showPassword ? "text" : "password"}
                 required
                 value={password}

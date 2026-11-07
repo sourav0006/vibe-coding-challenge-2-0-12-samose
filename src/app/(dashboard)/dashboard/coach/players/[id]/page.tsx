@@ -51,7 +51,7 @@ async function CoachPlayerDetailContent({
   try {
     const [playerDoc, sports, stats, matchResult, readinessResult, remarksDocs] = await Promise.all([
       PlayerService.getPlayerDetails(id),
-      SportService.findAllWithPlayerCounts(),
+      SportService.findAllSimple(),
       AttendanceService.getPlayerAttendanceStats(id),
       MatchService.getPlayerMatchStats(id),
       ReadinessService.getPlayerReadiness(id),
@@ -59,11 +59,7 @@ async function CoachPlayerDetailContent({
     ]);
 
     player = playerDoc;
-    sportsList = sports.map((s) => ({
-      id: s.id,
-      name: s.name,
-      isActive: s.isActive,
-    }));
+    sportsList = sports;
     attendanceStats = stats;
     matchStats = matchResult;
     readinessStats = readinessResult;

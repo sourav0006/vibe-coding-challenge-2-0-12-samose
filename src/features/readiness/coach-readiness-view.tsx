@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,14 @@ export function CoachReadinessView({
   const stats = fetchedData?.stats ?? initialStats;
 
   // Client-side refresh on mount/navigation to guarantee zero stale state
+  const isInitialMount = useRef(true);
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      if (initialPlayers && initialPlayers.length > 0) {
+        return;
+      }
+    }
     let isMounted = true;
     fetch("/api/coach/readiness?limit=100")
       .then((res) => res.json())
@@ -66,7 +73,7 @@ export function CoachReadinessView({
     return () => {
       isMounted = false;
     };
-  }, [initialStats]);
+  }, [initialStats, initialPlayers]);
 
   // Filters and search
   const [selectedSport, setSelectedSport] = useState<string>("all");
@@ -155,12 +162,12 @@ export function CoachReadinessView({
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
-          <Link href="/dashboard/coach/players">
+          <Link href="/dashboard/coach/players" prefetch={true}>
             <Button variant="outline" size="sm" className="font-barlow-condensed font-bold text-xs h-9 px-3.5 border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl cursor-pointer">
               Manage Players
             </Button>
           </Link>
-          <Link href="/dashboard/coach/matches">
+          <Link href="/dashboard/coach/matches" prefetch={true}>
             <Button variant="outline" size="sm" className="font-barlow-condensed font-bold text-xs h-9 px-3.5 border-[#DACBB4] text-[#132B32] hover:bg-[#F5EBD8] rounded-xl cursor-pointer">
               Match Fixtures
             </Button>
@@ -355,6 +362,7 @@ export function CoachReadinessView({
                           <div>
                             <Link
                               href={`/dashboard/coach/players/${player.playerId}`}
+                              prefetch={true}
                               className="font-bold text-[#132B32] hover:text-[#D95B24] transition-colors text-sm"
                             >
                               {player.fullName}
@@ -569,7 +577,7 @@ export function CoachReadinessView({
             </div>
 
             <div className="p-4 bg-[#F5EBD8] border-t border-[#E2D7C3] flex items-center justify-between">
-              <Link href={`/dashboard/coach/players/${explainingPlayer.playerId}`}>
+              <Link href={`/dashboard/coach/players/${explainingPlayer.playerId}`} prefetch={true}>
                 <Button variant="outline" size="sm" className="font-barlow-condensed font-bold text-xs border-[#DACBB4] text-[#132B32] hover:bg-[#FFF9EF] rounded-xl">
                   <span>Open Player Profile</span>
                   <ArrowRightIcon className="w-3 h-3 ml-1" />
