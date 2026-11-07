@@ -9,14 +9,14 @@ export const readinessQuerySchema = z.object({
   sortBy: z.enum(["attendance", "matches", "name"]).default("name"),
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(20),
+  limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
 export const scoutQuerySchema = z.object({
   sportId: z.string().optional(),
   search: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(20),
+  limit: z.coerce.number().int().positive().max(100).default(20),
 });
 
 export type ReadinessQueryInput = z.infer<typeof readinessQuerySchema>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import { useState, useSyncExternalStore, createContext, useContext, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/shared/logo";
@@ -97,7 +97,22 @@ interface NavItem {
   icon?: ReactNode;
 }
 
+const InAppShellContext = createContext<boolean>(false);
+
 export function AppShell({ user, children }: AppShellProps) {
+  const isNested = useContext(InAppShellContext);
+  if (isNested) {
+    return <>{children}</>;
+  }
+
+  return (
+    <InAppShellContext.Provider value={true}>
+      <AppShellContent user={user}>{children}</AppShellContent>
+    </InAppShellContext.Provider>
+  );
+}
+
+function AppShellContent({ user, children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);

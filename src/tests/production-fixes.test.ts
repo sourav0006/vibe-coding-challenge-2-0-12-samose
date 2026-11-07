@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { readinessQuerySchema } from "../lib/validation";
 
 let passedCount = 0;
 let failedCount = 0;
@@ -190,6 +191,25 @@ async function runProductionFixesTestSuite() {
       assert.ok(content.includes("<Suspense"), `${p} must include Suspense`);
       assert.ok(content.includes("fallback={<DashboardLoading"), `${p} must use DashboardLoading fallback`);
     });
+  });
+
+  // 3. Coach Readiness Query Limits Verification
+  console.log("\n--- 3. Coach Readiness Query Limits Verification ---");
+
+  await test("Coach readiness query schema supports limit=100 for roster fetch", () => {
+    const validQuery = { limit: "100" };
+    const result = readinessQuerySchema.safeParse(validQuery);
+    assert.equal(result.success, true, "readinessQuerySchema must accept limit=100");
+    if (result.success) {
+      assert.equal(result.data.limit, 100);
+    }
+  });
+
+  await test("Coach readiness query schema rejects limits exceeding 100 or non-positive", () => {
+    assert.equal(readinessQuerySchema.safeParse({ limit: "101" }).success, false, "limit=101 must fail");
+    assert.equal(readinessQuerySchema.safeParse({ limit: 0 }).success, false, "limit=0 must fail");
+    assert.equal(readinessQuerySchema.safeParse({ limit: -1 }).success, false, "limit=-1 must fail");
+    assert.equal(readinessQuerySchema.safeParse({ limit: "invalid" }).success, false, "non-numeric limit must fail");
   });
 
   console.log("\n========================================================");

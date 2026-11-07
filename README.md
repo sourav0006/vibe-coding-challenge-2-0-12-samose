@@ -9,11 +9,11 @@
 
 For evaluators and competition judges, pre-provisioned active accounts are configured for all three platform roles:
 
-| Role | Portal Login | Email Address | Password | Permissions & Scope |
-| :--- | :--- | :--- | :--- | :--- |
-| **Coach** | `/login?role=coach` | `coach@gmail.com` | `Coach@456` | Full Academy Administration: Rosters, Sports, Sessions, Attendance, Matches, Scoring, Scouting Board, Coach Remarks |
-| **Player** | `/login?role=player` | `sourav@gmail.com` | `Sourav@123` | Athlete Development Portal: Own Attendance, Match Performance History, Readiness Status Breakdown, Coach Remarks Feed |
-| **Scout** | `/login?role=scout` | `scout01@gmail.com` | `Scout01@123` | Talent Discovery Portal: Qualified Ready Athletes ($\ge 75\%$ attendance + $\ge 2$ finalized matches), Sport Filters, Performance Stats |
+| Role | Email Address | Password | Permissions & Scope |
+| :--- | :--- | :--- | :--- |
+| **Coach** | `coach@gmail.com` | `Coach@456` | Full Academy Administration: Rosters, Sports, Sessions, Attendance, Matches, Scoring, Scouting Board, Coach Remarks |
+| **Player** | `sourav@gmail.com` | `Sourav@123` | Athlete Development Portal: Own Attendance, Match Performance History, Readiness Status Breakdown, Coach Remarks Feed |
+| **Scout** | `scout01@gmail.com` | `Scout01@123` | Talent Discovery Portal: Qualified Ready Athletes ($\ge 75\%$ attendance + $\ge 2$ finalized matches), Sport Filters, Performance Stats |
 
 > **Note**: Each account has been verified in MongoDB Atlas. Accounts strictly enforce role-based access control (RBAC). Selecting the incorrect portal tab displays an informative role-mismatch notice without penalizing the user's login rate limit.
 
@@ -277,10 +277,10 @@ npx next build --webpack
 
 One Academy provides full public transparency and dedicated administrative support:
 
-- **Privacy Policy**: Accessible at [`/legal?tab=privacy`](https://vibe-coding-challenge-2-0-12-samose.vercel.app/legal?tab=privacy) covering RBAC data isolation, cryptographic hashing, and data subject review/correction rights.
-- **Terms of Use**: Accessible at [`/legal?tab=terms`](https://vibe-coding-challenge-2-0-12-samose.vercel.app/legal?tab=terms) outlining acceptable use, fixture score immutability, and attendance integrity.
-- **Account Activation Help**: Accessible at [`/activate/help`](https://vibe-coding-challenge-2-0-12-samose.vercel.app/activate/help) providing a 7-step guide and troubleshooting scenarios.
-- **Contact & Support**: Accessible at [`/support`](https://vibe-coding-challenge-2-0-12-samose.vercel.app/support).
+- **Privacy Policy**: Accessible at [`/legal?tab=privacy`](https://one-academy-exclrs.vercel.app/legal?tab=privacy) covering RBAC data isolation, cryptographic hashing, and data subject review/correction rights.
+- **Terms of Use**: Accessible at [`/legal?tab=terms`](https://one-academy-exclrs.vercel.app/legal?tab=terms) outlining acceptable use, fixture score immutability, and attendance integrity.
+- **Account Activation Help**: Accessible at [`/activate/help`](https://one-academy-exclrs.vercel.app/activate/help) providing a 7-step guide and troubleshooting scenarios.
+- **Contact & Support**: Accessible at [`/support`](https://one-academy-exclrs.vercel.app/support).
   - **Official Emails**: `souravn0612@gmail.com` · `alokrai0327@gmail.com`
   - **Official Telephones**: `+91 7480926552` · `+91 9025712162`
   - **Academy Operating Hours**: Monday – Sunday: 7:00 AM – 8:00 PM IST
